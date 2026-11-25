@@ -98,15 +98,10 @@ export default function Home() {
             </Link>
           </div>
 
-          <h1 className="mt-5 max-w-md text-[26px] font-black leading-[1.25] tracking-tight xs:text-[30px]">{t('heroTitle')}</h1>
-          <div className="mt-3 flex items-center gap-2">
-            <span className="chip bg-white/10 text-white/80"><Sparkles className="size-3.5 text-s-yellow" />{t('officialDistributor')}</span>
-            <div className="flex -space-x-2 rtl:space-x-reverse">
-              {categories?.map(c => (
-                <span key={c.id} className="grid size-8 place-items-center overflow-hidden rounded-full bg-white p-1 ring-2 ring-ink"><BrandLogo category={c} className="size-full !bg-transparent" /></span>
-              ))}
-            </div>
-          </div>
+          <h1 className="mt-4 max-w-md text-[24px] font-black leading-[1.3] tracking-tight xs:text-[28px]">{t('heroTitle')}</h1>
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/85">
+            <Sparkles className="size-3.5 text-s-yellow" />{t('officialDistributor')} · <span dir="ltr">Adan · FAB · Riyadh · Tools</span>
+          </p>
 
           <div className="relative mt-5">
             <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-gray-400" />
