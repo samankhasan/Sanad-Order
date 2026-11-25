@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
 import { supabase } from '../lib/supabase'
+import { notify } from '../lib/push'
 import { ErrorBox, PageHeader, Skeleton, Spinner, StatusBadge } from '../components/ui'
 import { cn, dateTime, money } from '../lib/format'
 import { ORDER_FLOW, type Order, type OrderItem, type OrderStatus, type Product } from '../lib/types'
@@ -44,7 +45,7 @@ export default function OrderDetail() {
     setBusy(s)
     const { error } = await supabase.from('orders').update({ status: s }).eq('id', id!)
     setBusy(null)
-    if (error) toast(error.message, 'error'); else { toast(t('saved')); load() }
+    if (error) toast(error.message, 'error'); else { toast(t('saved')); load(); notify({ action: 'order_status', order_id: id }) }
   }
 
   async function cancel() {

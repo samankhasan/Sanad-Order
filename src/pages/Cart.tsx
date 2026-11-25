@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
 import { useCategories } from '../lib/data'
 import { supabase } from '../lib/supabase'
+import { notify } from '../lib/push'
 import { EmptyState, PageHeader, QtyStepper, Spinner } from '../components/ui'
 import { money } from '../lib/format'
 import type { Order } from '../lib/types'
@@ -26,6 +27,7 @@ export default function Cart() {
     setBusy(false)
     if (error) { toast(error.message, 'error'); return }
     cart.clear()
+    notify({ action: 'new_order', order_id: (data as Order).id })
     toast(t('orderPlaced'))
     nav(`/orders/${(data as Order).id}`, { replace: true })
   }

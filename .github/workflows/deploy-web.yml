@@ -16,6 +16,11 @@ concurrency:
 
 env:
   # Public values (safe in the browser – data is protected by Row Level Security)
+  VITE_FIREBASE_API_KEY: ${{ vars.FIREBASE_API_KEY }}
+  VITE_FIREBASE_APP_ID: ${{ vars.FIREBASE_WEB_APP_ID }}
+  VITE_FIREBASE_VAPID_KEY: ${{ vars.FIREBASE_VAPID_KEY }}
+  VITE_FIREBASE_PROJECT_ID: sanad-notification-df624
+  VITE_FIREBASE_SENDER_ID: "61648825417"
   VITE_SUPABASE_URL: https://sqyldiaacqcaozowrwgn.supabase.co
   VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_CORochnLWs7Ie-PC0TDaHw_4fHk7XPk
 

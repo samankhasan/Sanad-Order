@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, PackageSearch, Search, X } from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, PackageSearch, Search, X } from 'lucide-react'
+import { useNotifications } from '../context/NotificationsContext'
 import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useCategories, useProducts } from '../lib/data'
@@ -16,6 +17,7 @@ export default function Home() {
   const { profile, session } = useAuth()
   const { categories, error, reload } = useCategories()
   const { products } = useProducts()
+  const { unread } = useNotifications()
   const [q, setQ] = useState('')
   const [open, setOpen] = useState<Product | null>(null)
   const [recent, setRecent] = useState<Order[] | null>(null)
@@ -56,7 +58,10 @@ export default function Home() {
             <p className="text-xs font-semibold text-white/60">{hour < 12 ? t('goodMorning') : t('goodEvening')} 👋</p>
             <h1 className="truncate text-xl font-extrabold">{name || t('welcome')}</h1>
           </div>
-          <span className="chip bg-white/10 text-white/80">Sanad Order</span>
+          <Link to="/notifications" aria-label={t('notifications')} className="relative grid size-12 place-items-center rounded-2xl bg-white/10 transition active:scale-95">
+            <Bell className="size-5" />
+            {unread > 0 && <span key={unread} className="bump absolute -top-1 -end-1 grid min-w-5 place-items-center rounded-full bg-s-red px-1 text-[10px] font-black ring-2 ring-ink">{unread > 9 ? '9+' : unread}</span>}
+          </Link>
         </div>
         <div className="relative mt-6">
           <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-gray-400" />

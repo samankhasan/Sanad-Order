@@ -4,6 +4,7 @@ import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { supabase } from '../lib/supabase'
+import { removeMyToken } from '../lib/push'
 import { PageHeader, Spinner } from '../components/ui'
 import { LANGS } from '../lib/i18n'
 import { assetUrl, cn } from '../lib/format'
@@ -88,7 +89,7 @@ export default function Profile() {
             <Download className="size-5" />{t('install')}
           </button>
         )}
-        <button onClick={signOut} className="btn btn-danger w-full"><LogOut className="size-5 rtl:-scale-x-100" />{t('signOut')}</button>
+        <button onClick={async () => { await removeMyToken(); await signOut() }} className="btn btn-danger w-full"><LogOut className="size-5 rtl:-scale-x-100" />{t('signOut')}</button>
         <div className="flex flex-col items-center gap-2 py-6 text-center">
           <img src={assetUrl('brands/sanad-mark.png')} alt="" className="h-10" />
           <p className="text-xs text-2">Sanad Order · v1.0.0</p>

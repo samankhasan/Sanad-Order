@@ -9,6 +9,8 @@ import Cart from './pages/Cart'
 import Orders from './pages/Orders'
 import OrderDetail from './pages/OrderDetail'
 import Profile from './pages/Profile'
+import Notifications from './pages/Notifications'
+import { NotificationsProvider } from './context/NotificationsContext'
 import { assetUrl } from './lib/format'
 
 // admin code is only downloaded by admins
@@ -17,6 +19,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
 const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'))
+const AdminNotify = lazy(() => import('./pages/admin/AdminNotify'))
 
 function Splash() {
   return (
@@ -41,6 +44,7 @@ export default function App() {
   if (!session) return <Login />
   return (
     <HashRouter>
+      <NotificationsProvider>
       <Suspense fallback={<Splash />}>
         <Routes>
           <Route element={<AppShell />}>
@@ -50,16 +54,19 @@ export default function App() {
             <Route path="orders" element={<Orders />} />
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="notifications" element={<Notifications />} />
             <Route path="admin" element={<AdminOnly><AdminLayout /></AdminOnly>}>
               <Route index element={<AdminDashboard />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="customers" element={<AdminCustomers />} />
+              <Route path="notify" element={<AdminNotify />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </Suspense>
+      </NotificationsProvider>
     </HashRouter>
   )
 }
