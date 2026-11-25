@@ -7,6 +7,9 @@ import { PrefsProvider } from './context/PrefsContext'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ToastProvider } from './context/ToastContext'
+import { initNative } from './lib/native'
+
+initNative()
 
 // Service worker only on the web (Capacitor serves files locally)
 if (!('Capacitor' in window)) registerSW({ immediate: true })

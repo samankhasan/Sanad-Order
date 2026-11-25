@@ -4,7 +4,7 @@ const locales: Record<Lang, string> = { ku: 'ar-IQ', ar: 'ar-IQ', en: 'en-US' }
 
 export function money(v: number, lang: Lang) {
   const n = new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'en-US', { maximumFractionDigits: 0 }).format(Number(v) || 0)
-  return lang === 'en' ? `${n} IQD` : `${n} د.ع`
+  return lang === 'en' ? `${n}\u00A0IQD` : `${n}\u00A0د.ع`
 }
 
 export function dateTime(iso: string, lang: Lang) {

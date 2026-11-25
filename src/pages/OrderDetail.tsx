@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
 import { supabase } from '../lib/supabase'
+import { notify } from '../lib/push'
 import { ErrorBox, PageHeader, Skeleton, Spinner, StatusBadge } from '../components/ui'
 import { cn, dateTime, money } from '../lib/format'
 import { ORDER_FLOW, type Order, type OrderItem, type OrderStatus, type Product } from '../lib/types'
@@ -44,7 +45,7 @@ export default function OrderDetail() {
     setBusy(s)
     const { error } = await supabase.from('orders').update({ status: s }).eq('id', id!)
     setBusy(null)
-    if (error) toast(error.message, 'error'); else { toast(t('saved')); load() }
+    if (error) toast(error.message, 'error'); else { toast(t('saved')); load(); notify({ action: 'order_status', order_id: id }) }
   }
 
   async function cancel() {
@@ -87,11 +88,11 @@ export default function OrderDetail() {
   const cancelled = order.status === 'cancelled'
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <PageHeader back title={<span dir="ltr">{t('order')} #{order.order_no}</span>} subtitle={dateTime(order.created_at, lang)}
-        right={<button aria-label={t('print')} onClick={() => window.print()} className="no-print grid size-11 place-items-center rounded-2xl surface border border-theme"><Printer className="size-5" /></button>} />
+        right={<button aria-label={t('print')} onClick={() => window.print()} className="icon-btn -me-2"><Printer className="size-5" /></button>} />
 
-      <div className="space-y-4 px-4 pb-8">
+      <div className="page-narrow px-g space-y-4 pb-4">
         {/* status timeline */}
         <section className="card p-5">
           <div className="mb-4 flex items-center justify-between"><StatusBadge status={order.status} /><span className="text-xs font-semibold text-2">{dateTime(order.updated_at, lang)}</span></div>

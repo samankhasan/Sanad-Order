@@ -8,6 +8,8 @@ export interface Profile {
   shop_name: string | null
   city: string | null
   role: Role
+  lang?: 'ku' | 'ar' | 'en'
+  notifications_seen_at?: string
   created_at: string
 }
 
@@ -67,3 +69,16 @@ export interface OrderItem {
 
 export const ORDER_FLOW: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'on_the_way', 'delivered']
 export const UNITS = ['piece', 'box', 'gallon', 'bucket', 'can', 'kg', 'liter', 'set', 'meter'] as const
+
+export interface AppNotification {
+  id: string
+  title: string
+  body: string
+  image_url: string | null
+  link: string | null
+  target_user: string | null
+  created_by: string | null
+  push_sent: number
+  push_failed: number
+  created_at: string
+}

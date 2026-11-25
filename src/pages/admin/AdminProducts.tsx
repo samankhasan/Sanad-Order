@@ -30,10 +30,10 @@ export default function AdminProducts() {
         </div>
         <button onClick={() => setEditing('new')} className="btn btn-primary shrink-0"><Plus className="size-5" /><span className="hidden sm:inline">{t('newProduct')}</span></button>
       </div>
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-        <button onClick={() => setCat(null)} className={cn('chip shrink-0 py-2', !cat ? 'bg-ink text-white dark:bg-white dark:text-ink' : 'surface border border-theme text-2')}>{t('all')} <span className="opacity-60">{products?.length ?? 0}</span></button>
+      <div className="no-scrollbar -mx-[var(--gutter)] flex gap-2 overflow-x-auto px-[var(--gutter)]">
+        <button onClick={() => setCat(null)} className={cn('filter-chip', !cat ? 'bg-ink text-white dark:bg-white dark:text-ink' : 'surface border border-theme text-2')}>{t('all')} <span className="opacity-60">{products?.length ?? 0}</span></button>
         {categories?.map(c => (
-          <button key={c.id} onClick={() => setCat(c.id)} className={cn('chip shrink-0 py-2', cat === c.id ? 'text-white' : 'surface border border-theme text-2')} style={cat === c.id ? { background: c.accent } : undefined}>
+          <button key={c.id} onClick={() => setCat(c.id)} className={cn('filter-chip', cat === c.id ? 'text-white' : 'surface border border-theme text-2')} style={cat === c.id ? { background: c.accent } : undefined}>
             {catName(c)} <span className="opacity-70">{products?.filter(p => p.category_id === c.id).length ?? 0}</span>
           </button>
         ))}

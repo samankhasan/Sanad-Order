@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { dictionaries, LANGS, type Lang, type TKey } from '../lib/i18n'
 import type { Category } from '../lib/types'
+import { setThemeForStatusBar } from '../lib/native'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -38,7 +39,8 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     const apply = () => {
       const dark = theme === 'dark' || (theme === 'system' && mq.matches)
       document.documentElement.classList.toggle('dark', dark)
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0B1220' : '#F6F7FB')
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#070B14' : '#F5F6FA')
+      setThemeForStatusBar(dark)
     }
     apply()
     mq.addEventListener('change', apply)

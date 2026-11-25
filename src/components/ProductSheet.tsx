@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
 import { money } from '../lib/format'
 import type { Product } from '../lib/types'
+import { haptic } from '../lib/native'
 
 export default function ProductSheet({ product, accent, onClose }: { product: Product | null; accent?: string; onClose: () => void }) {
   const { t, lang } = usePrefs()
@@ -18,8 +19,8 @@ export default function ProductSheet({ product, accent, onClose }: { product: Pr
     <Sheet open={!!product} onClose={onClose}>
       <div className="bg-white">
         {product.image_url
-          ? <img src={product.image_url} alt={product.name} className="mx-auto aspect-square max-h-80 w-full object-contain p-6" />
-          : <div className="grid aspect-[4/3] place-items-center text-gray-300"><ImageOff className="size-14" /></div>}
+          ? <img src={product.image_url} alt={product.name} className="mx-auto aspect-square max-h-[min(20rem,34dvh)] w-full object-contain p-6" />
+          : <div className="grid h-[min(16rem,28dvh)] place-items-center text-gray-300"><ImageOff className="size-14" /></div>}
       </div>
       <div className="space-y-4 p-5">
         <div>
@@ -41,16 +42,16 @@ export default function ProductSheet({ product, accent, onClose }: { product: Pr
           ))}
         </div>
         {product.description && <p className="whitespace-pre-line text-sm leading-relaxed text-2">{product.description}</p>}
-        <div className="flex items-center gap-3 pt-2">
-          <QtyStepper value={qty} onChange={setQty} min={1} />
+        <div className="flex flex-col items-stretch gap-3 pt-2 xs:flex-row xs:items-center">
+          <div className="flex justify-center"><QtyStepper value={qty} onChange={setQty} min={1} /></div>
           <button
             disabled={!product.in_stock}
-            className="btn flex-1 text-white"
+            className="btn min-h-14 min-w-0 flex-1 px-3 text-white"
             style={{ background: accent || '#0b1220' }}
-            onClick={() => { cart.add(product, qty); toast(t('added')); onClose() }}
+            onClick={() => { haptic('success'); cart.add(product, qty); toast(t('added')); onClose() }}
           >
-            <ShoppingBag className="size-5" />
-            {product.in_stock ? t('addToCart') : t('outOfStock')}
+            <ShoppingBag className="size-5 shrink-0" />
+            <span className="truncate">{product.in_stock ? t('addToCart') : t('outOfStock')}</span>
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Phone, Search, ShieldCheck, Store } from 'lucide-react'
+import { KeyRound, Phone, Search, ShieldCheck, Store } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -27,6 +27,13 @@ export default function AdminCustomers() {
     if (!confirm(role === 'admin' ? t('makeAdmin') + '?' : t('removeAdmin') + '?')) return
     const { error } = await supabase.from('profiles').update({ role }).eq('id', p.id)
     if (error) toast(error.message, 'error'); else { toast(t('saved')); load() }
+  }
+
+  async function resetPassword(p: Profile) {
+    const pw = prompt(`${p.full_name ?? ''}\n${t('newPasswordPrompt')}`)
+    if (!pw) return
+    const { data, error } = await supabase.functions.invoke('account', { body: { action: 'admin_set_password', user_id: p.id, password: pw } })
+    if (error || data?.error) toast(error?.message || data.error, 'error'); else toast(t('saved'))
   }
 
   const list = useMemo(() => {
@@ -58,7 +65,10 @@ export default function AdminCustomers() {
               {p.city && <span className="chip surface-2">{p.city}</span>}
             </div>
             {p.id !== session?.user.id && (
-              <button onClick={() => toggleRole(p)} className="mt-3 text-xs font-bold text-brand">{p.role === 'admin' ? t('removeAdmin') : t('makeAdmin')}</button>
+              <div className="mt-2 flex flex-wrap gap-1">
+                <button onClick={() => resetPassword(p)} className="flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-xs font-bold text-brand active:bg-[var(--surface-2)]"><KeyRound className="size-4" />{t('resetPassword')}</button>
+                <button onClick={() => toggleRole(p)} className="min-h-11 rounded-xl px-2 text-xs font-bold text-2 active:bg-[var(--surface-2)]">{p.role === 'admin' ? t('removeAdmin') : t('makeAdmin')}</button>
+              </div>
             )}
           </div>
         ))}

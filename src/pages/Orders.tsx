@@ -30,10 +30,10 @@ export default function Orders() {
   }, [session])
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <PageHeader title={t('orders')} />
       {error && <ErrorBox message={error} onRetry={load} />}
-      <div className="space-y-3 px-4">
+      <div className="page-narrow px-g space-y-3">
         {!orders && [0, 1, 2].map(i => <Skeleton key={i} className="h-24 rounded-3xl" />)}
         {orders?.length === 0 && <EmptyState icon={<ReceiptText className="size-9" />} title={t('noOrders')} hint={t('noOrdersHint')} action={<Link to="/" className="btn btn-primary">{t('browse')}</Link>} />}
         {orders?.map((o, i) => (

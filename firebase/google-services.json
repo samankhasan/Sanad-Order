@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "61648825417",
+    "project_id": "sanad-notification-df624",
+    "storage_bucket": "sanad-notification-df624.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:61648825417:android:1cb28454d7fff830086398",
+        "android_client_info": {
+          "package_name": "com.sanadcompany.sanadorder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpECg51Z5JAcYnkZxC-CUbht6GnQRDdIU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -39,9 +39,9 @@ export default function AdminOrders() {
         <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-2" />
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="#1001, name, phone…" className="field ps-12" />
       </div>
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+      <div className="no-scrollbar -mx-[var(--gutter)] flex gap-2 overflow-x-auto px-[var(--gutter)]">
         {(['all', ...ORDER_FLOW, 'cancelled'] as const).map(s => (
-          <button key={s} onClick={() => setFilter(s)} className={cn('chip shrink-0 py-2 transition', filter === s ? 'bg-ink text-white dark:bg-white dark:text-ink' : 'surface border border-theme text-2')}>
+          <button key={s} onClick={() => setFilter(s)} className={cn('filter-chip transition', filter === s ? 'bg-ink text-white dark:bg-white dark:text-ink' : 'surface border border-theme text-2')}>
             {s === 'all' ? t('all') : t(`status_${s}` as const)}
             {s !== 'all' && <span className="opacity-60">{count(s)}</span>}
           </button>
