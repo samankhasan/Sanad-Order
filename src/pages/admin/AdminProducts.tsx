@@ -1,15 +1,21 @@
-import { useMemo, useState } from 'react'
-import { EyeOff, ImageOff, PackageOpen, Plus, Search } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { EyeOff, GripVertical, ImageOff, Info, PackageOpen, Plus, Search } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
 import { useCategories, useProducts, useSubcategories } from '../../lib/data'
 import { subName } from './AdminCategories'
 import { EmptyState, ErrorBox, Skeleton } from '../../components/ui'
 import ProductForm from './ProductForm'
 import { cn, money } from '../../lib/format'
-import type { Product } from '../../lib/types'
+import type { Category, Product, Subcategory } from '../../lib/types'
+import { supabase } from '../../lib/supabase'
+import { useToast } from '../../context/ToastContext'
+import { haptic } from '../../lib/native'
 
 export default function AdminProducts() {
-  const { t, lang, catName } = usePrefs()
+  const { t, catName } = usePrefs()
   const { categories } = useCategories()
   const [cat, setCat] = useState<string | null>(null)
   const { products, error, reload } = useProducts(null, { includeHidden: true })
@@ -23,6 +29,27 @@ export default function AdminProducts() {
     return (products ?? []).filter(p => (!cat || p.category_id === cat) && (!s || [p.name, p.sku].some(v => v?.toLowerCase().includes(s))))
   }, [products, cat, q])
   const catOf = (id: string) => categories?.find(c => c.id === id)
+  const toast = useToast()
+
+  // drag & drop ordering: only inside one brand and without a search filter
+  const canSort = !!cat && !q.trim()
+  const [order, setOrder] = useState<Product[]>([])
+  useEffect(() => { setOrder(list) }, [list])
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+  async function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e
+    if (!over || active.id === over.id) return
+    const from = order.findIndex(p => p.id === active.id), to = order.findIndex(p => p.id === over.id)
+    const next = arrayMove(order, from, to)
+    setOrder(next)
+    haptic()
+    const { error } = await supabase.rpc('reorder_products', { p_ids: next.map(p => p.id) })
+    if (error) { toast(error.message, 'error'); setOrder(list) } else { toast(t('saved')); reload() }
+  }
 
   return (
     <div className="space-y-3">
@@ -44,31 +71,19 @@ export default function AdminProducts() {
       {error && <ErrorBox message={error} onRetry={reload} />}
       {!products && <Skeleton className="h-96 rounded-3xl" />}
       {products && list.length === 0 && <EmptyState icon={<PackageOpen className="size-9" />} title={t('noProducts')} action={<button onClick={() => setEditing('new')} className="btn btn-primary"><Plus className="size-5" />{t('newProduct')}</button>} />}
+      {list.length > 0 && !canSort && (
+        <p className="flex items-center gap-2 px-1 text-xs font-semibold text-2"><Info className="size-4 shrink-0" />{t('reorderHint')}</p>
+      )}
       {list.length > 0 && (
-        <div className="card divide-y divide-[var(--border)] overflow-hidden">
-          {list.map(p => {
-            const c = catOf(p.category_id)
-            return (
-              <button key={p.id} onClick={() => setEditing(p)} className={cn('flex w-full items-center gap-3 p-3 text-start transition hover:bg-[var(--surface-2)]', !p.is_active && 'opacity-50')}>
-                <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-white">
-                  {p.image_url ? <img src={p.image_url} alt="" className="size-full object-contain p-1" loading="lazy" /> : <ImageOff className="size-5 text-gray-300" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold">{p.name}</p>
-                  <p className="flex items-center gap-1.5 truncate text-xs text-2">
-                    {c && <span className="size-2 rounded-full" style={{ background: c.accent }} />}
-                    {c && catName(c)}{subOf(p.subcategory_id) && ` · ${subName(subOf(p.subcategory_id)!, lang)}`}{p.size && ` · ${p.size}`}
-                    {!p.is_active && <EyeOff className="size-3.5" />}
-                  </p>
-                </div>
-                <div className="text-end">
-                  <p className="text-sm font-extrabold" dir="ltr">{money(p.price, lang)}</p>
-                  {!p.in_stock && <p className="text-[11px] font-bold text-rose-600">{t('outOfStock')}</p>}
-                </div>
-              </button>
-            )
-          })}
-        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <SortableContext items={order.map(p => p.id)} strategy={verticalListSortingStrategy} disabled={!canSort}>
+            <ul className="card divide-y divide-[var(--border)] overflow-hidden">
+              {order.map(p => (
+                <ProductRow key={p.id} p={p} sortable={canSort} c={catOf(p.category_id)} sub={subOf(p.subcategory_id)} onOpen={() => setEditing(p)} />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
       )}
       {editing && (
         <ProductForm
@@ -79,5 +94,37 @@ export default function AdminProducts() {
         />
       )}
     </div>
+  )
+}
+
+function ProductRow({ p, c, sub, sortable, onOpen }: { p: Product; c?: Category; sub?: Subcategory; sortable: boolean; onOpen: () => void }) {
+  const { t, lang, catName } = usePrefs()
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: !sortable })
+  return (
+    <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn('relative flex items-center surface', isDragging && 'z-10 rounded-2xl shadow-2xl ring-2 ring-[var(--color-brand)]', !p.is_active && 'opacity-50')}>
+      {sortable && (
+        <button ref={setActivatorNodeRef} {...attributes} {...listeners} aria-label="drag" className="grid h-full min-h-[72px] w-11 shrink-0 cursor-grab touch-none place-items-center text-2 active:cursor-grabbing">
+          <GripVertical className="size-5" />
+        </button>
+      )}
+      <button onClick={onOpen} className={cn('flex min-w-0 flex-1 items-center gap-3 py-3 pe-3 text-start transition hover:bg-[var(--surface-2)]', !sortable && 'ps-3')}>
+        <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-white">
+          {p.image_url ? <img src={p.image_url} alt="" className="size-full object-contain p-1" loading="lazy" draggable={false} /> : <ImageOff className="size-5 text-gray-300" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold">{p.name}</p>
+          <p className="flex items-center gap-1.5 truncate text-xs text-2">
+            {c && <span className="size-2 rounded-full" style={{ background: c.accent }} />}
+            {c && catName(c)}{sub && ` · ${subName(sub, lang)}`}{p.size && ` · ${p.size}`}
+            {!p.is_active && <EyeOff className="size-3.5" />}
+          </p>
+        </div>
+        <div className="text-end">
+          <p className="text-sm font-extrabold" dir="ltr">{money(p.price, lang)}</p>
+          {!p.in_stock && <p className="text-[11px] font-bold text-rose-600">{t('outOfStock')}</p>}
+        </div>
+      </button>
+    </li>
   )
 }
