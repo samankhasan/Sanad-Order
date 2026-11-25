@@ -16,6 +16,9 @@ env:
   VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_CORochnLWs7Ie-PC0TDaHw_4fHk7XPk
   VITE_NATIVE_PUSH: "1"
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -71,8 +74,24 @@ jobs:
           $BT/apksigner sign --ks upload.jks --ks-pass env:KS_PASS --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS --out out/SanadOrder-$VN-$VC.apk out/aligned.apk
           rm out/aligned.apk upload.jks
           $BT/apksigner verify out/SanadOrder-$VN-$VC.apk && echo "APK signature OK"
+          cp out/SanadOrder-$VN-$VC.apk out/SanadOrder.apk
           ls -la out
       - uses: actions/upload-artifact@v4
         with:
           name: SanadOrder-release-${{ env.VN }}-${{ env.VC }}
-          path: out/*
+          path: |
+            out/SanadOrder-*.aab
+            out/SanadOrder-*.apk
+      # Public direct-download link (no GitHub login, no zip):
+      # https://github.com/samankhasan/Sanad-Order/releases/latest/download/SanadOrder.apk
+      - name: Publish GitHub Release with the signed APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VN }}-${{ env.VC }}
+          name: Sanad Order ${{ env.VN }} (${{ env.VC }})
+          make_latest: true
+          body: |
+            📱 Android: download **SanadOrder.apk** below and open it on the phone.
+            Direct link: https://github.com/samankhasan/Sanad-Order/releases/latest/download/SanadOrder.apk
+          files: |
+            out/SanadOrder.apk

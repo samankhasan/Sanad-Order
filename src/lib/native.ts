@@ -67,3 +67,6 @@ async function applyStatusBar() {
 }
 export function setThemeForStatusBar(dark: boolean) { themeDark = dark; applyStatusBar() }
 export function setStatusBarOverride(v: 'light' | 'dark' | null) { override = v; applyStatusBar() }
+
+/** Direct download of the latest signed Android app (GitHub Release asset). */
+export const ANDROID_APK_URL = 'https://github.com/samankhasan/Sanad-Order/releases/latest/download/SanadOrder.apk'
