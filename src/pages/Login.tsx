@@ -5,6 +5,7 @@ import { usePrefs } from '../context/PrefsContext'
 import { useToast } from '../context/ToastContext'
 import { Spinner } from '../components/ui'
 import CitySelect from '../components/CitySelect'
+import GoogleButton from '../components/GoogleButton'
 import { assetUrl, cn } from '../lib/format'
 import { LANGS } from '../lib/i18n'
 import { isEmail, normalizePhone } from '../lib/identity'
@@ -133,6 +134,10 @@ export default function Login() {
                 {m === 'in' ? t('signIn') : t('signUp')}
               </button>
             ))}
+          </div>
+          <GoogleButton />
+          <div className="my-4 flex items-center gap-3 text-xs font-bold text-2">
+            <span className="h-px flex-1 bg-[var(--border)]" />{t('orDivider')}<span className="h-px flex-1 bg-[var(--border)]" />
           </div>
           <form onSubmit={submit} method="post" action="#" autoComplete="on" className="space-y-3">
             {mode === 'in' ? (

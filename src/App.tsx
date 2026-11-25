@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext'
 import AppShell from './components/AppShell'
 import Login from './pages/Login'
 import SetPassword from './pages/SetPassword'
+import CompleteProfile, { needsProfileCompletion } from './pages/CompleteProfile'
 import Home from './pages/Home'
 import Category from './pages/Category'
 import Cart from './pages/Cart'
@@ -41,10 +42,11 @@ function AdminOnly({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  const { session, loading, recovery } = useAuth()
+  const { session, loading, recovery, profile } = useAuth()
   if (loading) return <Splash />
   if (!session) return <Login />
   if (recovery) return <SetPassword />
+  if (needsProfileCompletion(profile)) return <CompleteProfile />
   return (
     <HashRouter>
       <NotificationsProvider>
