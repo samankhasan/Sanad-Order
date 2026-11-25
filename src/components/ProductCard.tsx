@@ -1,0 +1,42 @@
+import { ImageOff, Plus } from 'lucide-react'
+import { usePrefs } from '../context/PrefsContext'
+import { useCart } from '../context/CartContext'
+import { money, cn } from '../lib/format'
+import type { Product } from '../lib/types'
+
+export default function ProductCard({ product, accent, onOpen, index = 0 }: { product: Product; accent?: string; onOpen: () => void; index?: number }) {
+  const { t, lang } = usePrefs()
+  const cart = useCart()
+  const qty = cart.qtyOf(product.id)
+  return (
+    <div className="rise card group flex flex-col overflow-hidden" style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}>
+      <button onClick={onOpen} className="relative aspect-square w-full overflow-hidden bg-white">
+        {product.image_url
+          ? <img src={product.image_url} alt={product.name} loading="lazy" className="size-full object-contain p-3 transition duration-500 group-hover:scale-105" />
+          : <div className="grid size-full place-items-center text-gray-300"><ImageOff className="size-10" /></div>}
+        {!product.in_stock && <span className="chip absolute top-2 start-2 bg-ink/85 text-white">{t('outOfStock')}</span>}
+        {qty > 0 && <span key={qty} className="bump absolute top-2 end-2 grid min-w-7 place-items-center rounded-full px-2 py-1 text-xs font-black text-white" style={{ background: accent || '#0b1220' }}>{qty}</span>}
+      </button>
+      <div className="flex flex-1 flex-col gap-1 p-3">
+        <button onClick={onOpen} className="text-start">
+          <h3 className="line-clamp-2 text-sm font-bold leading-snug">{product.name}</h3>
+          {(product.size || product.unit) && (
+            <p className="mt-0.5 text-xs text-2">{[product.size, t(`unit_${product.unit}` as never) || product.unit].filter(Boolean).join(' · ')}</p>
+          )}
+        </button>
+        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+          <span className="text-sm font-extrabold" dir="ltr">{Number(product.price) > 0 ? money(product.price, lang) : <span className="text-xs font-semibold text-2">{t('priceOnRequest')}</span>}</span>
+          <button
+            aria-label={t('addToCart')}
+            disabled={!product.in_stock}
+            onClick={() => cart.add(product)}
+            className={cn('grid size-9 shrink-0 place-items-center rounded-xl text-white shadow-md transition active:scale-90 disabled:opacity-30')}
+            style={{ background: accent || '#0b1220' }}
+          >
+            <Plus className="size-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
