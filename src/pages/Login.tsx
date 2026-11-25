@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { AtSign, Eye, EyeOff, Globe, Home, Lock, Mail, Phone, UserRound } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { AtSign, Eye, EyeOff, Globe, Home, Lock, Mail, Phone, ShieldCheck, UserRound } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { usePrefs } from '../context/PrefsContext'
 import { useToast } from '../context/ToastContext'
@@ -12,6 +12,16 @@ import { isNativeApp } from '../lib/native'
 
 const SITE_URL = 'https://samankhasan.github.io/Sanad-Order/'
 const empty = { id: '', password: '', full_name: '', username: '', email: '', phone: '', city: '', address: '' }
+const LAST_LOGIN = 'so.lastLogin'
+
+/** Ask the browser / phone password manager to save the login (Chrome & Android support this). */
+async function savePassword(id: string, password: string, name?: string) {
+  try { localStorage.setItem(LAST_LOGIN, id) } catch { /* ignore */ }
+  try {
+    const PC = (window as unknown as { PasswordCredential?: new (d: { id: string; password: string; name?: string }) => Credential }).PasswordCredential
+    if (PC && navigator.credentials?.store) await navigator.credentials.store(new PC({ id, password, name }))
+  } catch { /* not supported — the browser's own save prompt still works */ }
+}
 
 export default function Login() {
   const { t, lang, setLang } = usePrefs()
@@ -19,7 +29,21 @@ export default function Login() {
   const [mode, setMode] = useState<'in' | 'up'>('in')
   const [busy, setBusy] = useState(false)
   const [show, setShow] = useState(false)
-  const [f, setF] = useState(empty)
+  const [f, setF] = useState(() => {
+    let id = ''
+    try { id = localStorage.getItem(LAST_LOGIN) ?? '' } catch { /* ignore */ }
+    return { ...empty, id }
+  })
+
+  // offer a saved password (Chrome / Android) to fill the form
+  useEffect(() => {
+    const nav = navigator as Navigator & { credentials?: { get?: (o: unknown) => Promise<Credential | null> } }
+    if (!('PasswordCredential' in window) || !nav.credentials?.get) return
+    nav.credentials.get({ password: true, mediation: 'optional' }).then(c => {
+      const pc = c as (Credential & { password?: string }) | null
+      if (pc?.id && pc.password) setF(s => ({ ...s, id: pc.id, password: pc.password! }))
+    }).catch(() => {})
+  }, [])
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value })
 
   function niceError(msg: string) {
@@ -45,6 +69,7 @@ export default function Login() {
         if (!email) throw new Error('Invalid login credentials')
         const { error } = await supabase.auth.signInWithPassword({ email, password: f.password })
         if (error) throw error
+        await savePassword(f.id.trim(), f.password)
       } else {
         const username = f.username.trim().toLowerCase()
         const { data: free } = await supabase.rpc('username_available', { p_username: username })
@@ -59,6 +84,7 @@ export default function Login() {
           const r = await supabase.auth.signInWithPassword({ email, password: f.password })
           if (r.error) throw r.error
         }
+        await savePassword(username, f.password, f.full_name.trim())
       }
     } catch (err) {
       toast(niceError((err as Error).message), 'error')
@@ -108,12 +134,12 @@ export default function Login() {
               </button>
             ))}
           </div>
-          <form onSubmit={submit} className="space-y-3">
+          <form onSubmit={submit} method="post" action="#" autoComplete="on" className="space-y-3">
             {mode === 'in' ? (
               <div className="relative">
                 <UserRound className={iconCls} />
                 <input required dir="ltr" className={ltrField} placeholder={t('loginId')} aria-label={t('loginId')}
-                  value={f.id} onChange={set('id')} autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+                  id="username" name="username" value={f.id} onChange={set('id')} autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
               </div>
             ) : (
               <>
@@ -126,7 +152,7 @@ export default function Login() {
                     <AtSign className={iconCls} />
                     <input required dir="ltr" className={ltrField} placeholder={t('username')} aria-label={t('username')} pattern="[A-Za-z0-9._]{3,30}"
                       value={f.username} onChange={e => setF({ ...f, username: e.target.value.replace(/[^A-Za-z0-9._]/g, '').toLowerCase() })}
-                      autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={30} />
+                      id="new-username" name="username" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={30} />
                   </div>
                   <p className="mt-1 px-1 text-[11px] text-2">{t('usernameHint')}</p>
                 </div>
@@ -152,6 +178,7 @@ export default function Login() {
               <Lock className={iconCls} />
               <input required minLength={6} type={show ? 'text' : 'password'} dir="ltr" className={ltrField}
                 placeholder={t('password')} aria-label={t('password')}
+                id={mode === 'in' ? 'current-password' : 'new-password'} name="password"
                 value={f.password} onChange={set('password')} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} />
               <button type="button" aria-label="show password" onClick={() => setShow(!show)} className="absolute inset-y-0 end-0 grid w-12 place-items-center text-2">
                 {show ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
@@ -174,6 +201,7 @@ export default function Login() {
             <button disabled={busy} className="btn btn-primary mt-1 min-h-14 w-full text-base">
               {busy && <Spinner />} {mode === 'in' ? t('signIn') : t('signUp')}
             </button>
+            {mode === 'in' && <p className="flex items-center justify-center gap-1.5 text-center text-[11px] font-semibold text-2"><ShieldCheck className="size-3.5 shrink-0 text-emerald-600" />{t('staySignedIn')}</p>}
             {mode === 'in' && <button type="button" disabled={busy} onClick={forgot} className="min-h-11 w-full text-center text-sm font-semibold text-2">{t('forgot')}</button>}
           </form>
         </div>
