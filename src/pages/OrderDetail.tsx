@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Check, MessageCircle, Phone, Printer, RotateCcw, Store, XCircle } from 'lucide-react'
+import { AtSign, Check, MapPin, MessageCircle, Phone, Printer, RotateCcw, XCircle } from 'lucide-react'
+import { placeLabel } from '../lib/iraq'
 import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
@@ -25,7 +26,7 @@ export default function OrderDetail() {
 
   const load = useCallback(async () => {
     const [o, it] = await Promise.all([
-      supabase.from('orders').select('*, profiles(full_name, phone, shop_name, city)').eq('id', id!).single(),
+      supabase.from('orders').select('*, profiles(full_name, phone, shop_name, city, address, username)').eq('id', id!).single(),
       supabase.from('order_items').select('*').eq('order_id', id!)
     ])
     if (o.error) { setError(o.error.message); return }
@@ -70,7 +71,8 @@ export default function OrderDetail() {
     if (!order || !items) return
     const lines = [
       `*Sanad Order #${order.order_no}*`,
-      order.profiles?.shop_name || order.profiles?.full_name || '',
+      order.profiles?.full_name || order.profiles?.shop_name || '',
+      [placeLabel(order.profiles?.city, lang), order.profiles?.address].filter(Boolean).join(' — '),
       '',
       ...items.map(i => `• ${i.product_name}${i.size ? ` (${i.size})` : ''} × ${i.quantity} = ${money(i.line_total, lang)}`),
       '',
@@ -111,9 +113,8 @@ export default function OrderDetail() {
           </div>
           <div className="mt-3 flex flex-wrap gap-x-8 gap-y-1 text-sm">
             <p><b>{t('customer')}:</b> {order.profiles?.full_name || '—'}</p>
-            {order.profiles?.shop_name && <p><b>{t('shopName')}:</b> {order.profiles.shop_name}</p>}
-            {order.profiles?.phone && <p dir="ltr"><b>{t('phone')}:</b> {order.profiles.phone}</p>}
-            {order.profiles?.city && <p><b>{t('city')}:</b> {order.profiles.city}</p>}
+            {order.profiles?.phone && <p dir="ltr"><b>{t('phone')}:</b> +{order.profiles.phone}</p>}
+            {(order.profiles?.city || order.profiles?.address) && <p><b>{t('address')}:</b> {[placeLabel(order.profiles?.city, lang), order.profiles?.address].filter(Boolean).join(' — ')}</p>}
           </div>
           <div className="mt-3 h-1.5 sanad-stripe [print-color-adjust:exact] [-webkit-print-color-adjust:exact]" />
         </div>
@@ -141,9 +142,13 @@ export default function OrderDetail() {
             <p className="label">{t('customer')}</p>
             <p className="text-lg font-extrabold">{order.profiles.full_name || '—'}</p>
             <div className="mt-2 flex flex-wrap gap-2 text-sm">
-              {order.profiles.shop_name && <span className="chip surface-2"><Store className="size-3.5" />{order.profiles.shop_name}</span>}
-              {order.profiles.phone && <a href={`tel:${order.profiles.phone}`} className="chip surface-2" dir="ltr"><Phone className="size-3.5" />{order.profiles.phone}</a>}
+              {order.profiles.username && <span className="chip surface-2" dir="ltr"><AtSign className="size-3.5" />{order.profiles.username}</span>}
+              {order.profiles.phone && <a href={`tel:+${order.profiles.phone}`} className="chip min-h-9 surface-2" dir="ltr"><Phone className="size-3.5" />+{order.profiles.phone}</a>}
             </div>
+            {(order.profiles.city || order.profiles.address) && (
+              <p className="mt-3 flex items-start gap-2 rounded-2xl surface-2 p-3 text-sm"><MapPin className="mt-0.5 size-4 shrink-0 text-2" />
+                <span><b>{placeLabel(order.profiles.city, lang)}</b>{order.profiles.address && ` — ${order.profiles.address}`}</span></p>
+            )}
           </section>
         )}
 

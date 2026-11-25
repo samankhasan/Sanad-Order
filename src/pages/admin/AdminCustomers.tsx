@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { KeyRound, Phone, Search, ShieldCheck, Store } from 'lucide-react'
+import { AtSign, KeyRound, MapPin, Phone, Search, ShieldCheck } from 'lucide-react'
+import { placeLabel } from '../../lib/iraq'
 import { usePrefs } from '../../context/PrefsContext'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -38,7 +39,7 @@ export default function AdminCustomers() {
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase()
-    return (rows ?? []).filter(p => !s || [p.full_name, p.shop_name, p.phone, p.city].some(v => v?.toLowerCase().includes(s)))
+    return (rows ?? []).filter(p => !s || [p.full_name, p.username, p.phone, p.city, p.address, placeLabel(p.city, lang)].some(v => v?.toLowerCase().includes(s)))
   }, [rows, q])
 
   return (
@@ -60,10 +61,12 @@ export default function AdminCustomers() {
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              {p.shop_name && <span className="chip surface-2"><Store className="size-3.5" />{p.shop_name}</span>}
-              {p.phone && <a href={`tel:${p.phone}`} className="chip surface-2" dir="ltr"><Phone className="size-3.5" />{p.phone}</a>}
-              {p.city && <span className="chip surface-2">{p.city}</span>}
+              {p.username && <span className="chip surface-2" dir="ltr"><AtSign className="size-3.5" />{p.username}</span>}
+              {p.phone && <a href={`tel:+${p.phone}`} className="chip min-h-9 surface-2" dir="ltr"><Phone className="size-3.5" />+{p.phone}</a>}
             </div>
+            {(p.city || p.address) && (
+              <p className="mt-2 flex items-start gap-1.5 text-xs text-2"><MapPin className="mt-0.5 size-3.5 shrink-0" /><span><b>{placeLabel(p.city, lang)}</b>{p.address && ` — ${p.address}`}</span></p>
+            )}
             {p.id !== session?.user.id && (
               <div className="mt-2 flex flex-wrap gap-1">
                 <button onClick={() => resetPassword(p)} className="flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-xs font-bold text-brand active:bg-[var(--surface-2)]"><KeyRound className="size-4" />{t('resetPassword')}</button>
