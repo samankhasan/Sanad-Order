@@ -46,3 +46,14 @@ export function useSubcategories(categoryId?: string | null, opts: { includeHidd
   useEffect(() => { load() }, [load])
   return { subcategories: data, reload: load }
 }
+
+/** Best sellers (ranked by quantity sold, server side). */
+export function usePopularProducts(limit = 10) {
+  const [data, setData] = useState<Product[] | null>(null)
+  const load = useCallback(async () => {
+    const { data } = await supabase.rpc('popular_products', { p_limit: limit })
+    setData((data as Product[]) ?? [])
+  }, [limit])
+  useEffect(() => { load() }, [load])
+  return { popular: data, reload: load }
+}

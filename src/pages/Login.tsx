@@ -120,7 +120,8 @@ export default function Login() {
           </form>
         </div>
         <p className="mt-auto pt-6 text-center text-xs text-2">
-          © Sanad Company · <a href="./privacy.html" target="_blank" rel="noreferrer" className="underline">{t('privacy')}</a>
+          <span dir="ltr">Sanad Company © 2026</span> · <a href="./privacy.html" target="_blank" rel="noreferrer" className="underline">{t('privacy')}</a>
+          <br /><span dir="ltr">Created by <a href="https://wa.me/9647508418593" target="_blank" rel="noreferrer" className="font-extrabold text-[#25D366]">Saman</a></span>
         </p>
       </div>
     </div>

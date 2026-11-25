@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Bell, ChevronLeft, ChevronRight, Megaphone, PackageSearch, ReceiptText, RotateCcw, Search, Sparkles, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Bell, ChevronLeft, ChevronRight, Flame, MessageCircle, PackageSearch, ReceiptText, RotateCcw, Search, Sparkles, X } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationsContext'
-import { useCategories, useProducts } from '../lib/data'
+import { useCategories, usePopularProducts, useProducts } from '../lib/data'
 import { supabase } from '../lib/supabase'
 import { BrandLogo, EmptyState, ErrorBox, PullToRefresh, Skeleton, StatusBadge } from '../components/ui'
 import ProductCard from '../components/ProductCard'
 import ProductSheet from '../components/ProductSheet'
-import { assetUrl, cn, money } from '../lib/format'
+import { assetUrl, money } from '../lib/format'
 import type { Order, Product } from '../lib/types'
 import { setStatusBarOverride } from '../lib/native'
 
@@ -23,13 +23,28 @@ function SectionTitle({ title, to, icon }: { title: string; to?: string; icon?: 
   )
 }
 
+function ProductStrip({ title, icon, items, accentOf, onOpen }: { title: string; icon: React.ReactNode; items: Product[]; accentOf: (id: string) => string | undefined; onOpen: (p: Product) => void }) {
+  return (
+    <section>
+      <SectionTitle title={title} icon={icon} />
+      <div className="no-scrollbar -mx-[var(--gutter)] flex snap-x gap-3 overflow-x-auto px-[var(--gutter)] pb-1">
+        {items.map((p, i) => (
+          <div key={p.id} className="w-[44%] max-w-[200px] shrink-0 snap-start xs:w-[40%] sm:w-48">
+            <ProductCard index={i} product={p} accent={accentOf(p.category_id)} onOpen={() => onOpen(p)} />
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function Home() {
   const { t, catName, dir, lang } = usePrefs()
   const { profile, session } = useAuth()
-  const { unread, items: notes } = useNotifications()
+  const { unread } = useNotifications()
   const { categories, error, reload } = useCategories()
   const { products, reload: reloadProducts } = useProducts()
-  const nav = useNavigate()
+  const { popular, reload: reloadPopular } = usePopularProducts(10)
   const [q, setQ] = useState('')
   const [open, setOpen] = useState<Product | null>(null)
   const [recent, setRecent] = useState<Order[] | null>(null)
@@ -42,7 +57,7 @@ export default function Home() {
   }, [session])
   useEffect(() => { loadRecent() }, [loadRecent])
   useEffect(() => { setStatusBarOverride('light'); return () => setStatusBarOverride(null) }, [])
-  const refresh = useCallback(() => Promise.all([reload(), reloadProducts(), loadRecent()]), [reload, reloadProducts, loadRecent])
+  const refresh = useCallback(() => Promise.all([reload(), reloadProducts(), reloadPopular(), loadRecent()]), [reload, reloadProducts, reloadPopular, loadRecent])
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {}
@@ -50,7 +65,6 @@ export default function Home() {
     return m
   }, [products])
   const newest = useMemo(() => [...(products ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 10), [products])
-  const offers = useMemo(() => (notes ?? []).filter(n => !n.target_user).slice(0, 6), [notes])
   const activeOrders = recent?.filter(o => !['delivered', 'cancelled'].includes(o.status)).length ?? 0
 
   const results = useMemo(() => {
@@ -137,36 +151,6 @@ export default function Home() {
               ))}
             </section>
 
-            {/* ===== Offers & news ===== */}
-            {offers.length > 0 && (
-              <section>
-                <SectionTitle title={t('offers')} to="/notifications" icon={<Megaphone className="size-5 text-s-orange" />} />
-                <div className="no-scrollbar -mx-[var(--gutter)] flex snap-x snap-mandatory gap-3 overflow-x-auto px-[var(--gutter)] pb-1">
-                  {offers.map((n, i) => (
-                    <button key={n.id} onClick={() => nav(n.link || '/notifications')}
-                      className={cn('relative w-[84%] max-w-sm shrink-0 snap-start overflow-hidden rounded-[24px] text-start text-white shadow-lg active:scale-[.99] transition sm:w-80', !n.image_url && 'p-5')}
-                      style={!n.image_url ? { background: ['linear-gradient(135deg,#0b3c7d,#0284d6)', 'linear-gradient(135deg,#7b1b6a,#e10e19)', 'linear-gradient(135deg,#f36f21,#ffcb05)', 'linear-gradient(135deg,#1e7a33,#4fa62f)'][i % 4] } : undefined}>
-                      {n.image_url ? (
-                        <>
-                          <img src={n.image_url} alt="" className="aspect-[16/9] w-full object-cover" loading="lazy" />
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-10">
-                            <p className="line-clamp-1 font-extrabold">{n.title}</p>
-                            <p className="line-clamp-1 text-sm text-white/80">{n.body}</p>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex min-h-[132px] flex-col">
-                          <Megaphone className="size-6 opacity-70" />
-                          <p className="mt-3 line-clamp-2 text-lg font-extrabold leading-snug">{n.title}</p>
-                          <p className="mt-1 line-clamp-2 text-sm text-white/85">{n.body}</p>
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-
             {/* ===== Brands ===== */}
             <section>
               <SectionTitle title={t('shopAll')} />
@@ -189,18 +173,14 @@ export default function Home() {
               </div>
             </section>
 
+            {/* ===== Best sellers ===== */}
+            {popular && popular.length > 0 && (
+              <ProductStrip title={t('popular')} icon={<Flame className="size-5 text-s-red" />} items={popular} accentOf={accentOf} onOpen={setOpen} />
+            )}
+
             {/* ===== New arrivals ===== */}
             {newest.length > 0 && (
-              <section>
-                <SectionTitle title={t('newArrivals')} icon={<Sparkles className="size-5 text-s-yellow" />} />
-                <div className="no-scrollbar -mx-[var(--gutter)] flex snap-x gap-3 overflow-x-auto px-[var(--gutter)] pb-1">
-                  {newest.map((p, i) => (
-                    <div key={p.id} className="w-[44%] max-w-[200px] shrink-0 snap-start xs:w-[40%] sm:w-48">
-                      <ProductCard index={i} product={p} accent={accentOf(p.category_id)} onOpen={() => setOpen(p)} />
-                    </div>
-                  ))}
-                </div>
-              </section>
+              <ProductStrip title={t('newArrivals')} icon={<Sparkles className="size-5 text-s-yellow" />} items={newest} accentOf={accentOf} onOpen={setOpen} />
             )}
 
             {/* ===== Recent orders ===== */}
@@ -222,10 +202,15 @@ export default function Home() {
               </section>
             )}
 
-            <div className="flex flex-col items-center gap-2 pt-2 text-center">
-              <div className="h-1 w-16 rounded-full sanad-stripe" />
-              <p className="text-xs font-semibold text-2">Sanad Company · Sanad Order</p>
-            </div>
+            <footer className="flex flex-col items-center gap-1.5 pt-2 text-center text-xs font-semibold text-2">
+              <div className="mb-1 h-1 w-16 rounded-full sanad-stripe" />
+              <p dir="ltr">Sanad Company © 2026</p>
+              <p dir="ltr">Created by{' '}
+                <a href="https://wa.me/9647508418593" target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1 font-extrabold text-[#25D366] underline-offset-2 hover:underline">
+                  Saman <MessageCircle className="size-3.5" />
+                </a>
+              </p>
+            </footer>
           </>
         )}
       </div>
