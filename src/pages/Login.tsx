@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { AtSign, Eye, EyeOff, Globe, Home, Lock, Mail, Phone, ShieldCheck, UserRound } from 'lucide-react'
+import { AtSign, Download, Eye, EyeOff, Globe, Home, Lock, Mail, Phone, ShieldCheck, UserRound } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { usePrefs } from '../context/PrefsContext'
 import { useToast } from '../context/ToastContext'
@@ -8,7 +8,7 @@ import CitySelect from '../components/CitySelect'
 import { assetUrl, cn } from '../lib/format'
 import { LANGS } from '../lib/i18n'
 import { isEmail, normalizePhone } from '../lib/identity'
-import { isNativeApp } from '../lib/native'
+import { ANDROID_APK_URL, isNativeApp } from '../lib/native'
 
 const SITE_URL = 'https://samankhasan.github.io/Sanad-Order/'
 const empty = { id: '', password: '', full_name: '', username: '', email: '', phone: '', city: '', address: '' }
@@ -205,6 +205,11 @@ export default function Login() {
             {mode === 'in' && <button type="button" disabled={busy} onClick={forgot} className="min-h-11 w-full text-center text-sm font-semibold text-2">{t('forgot')}</button>}
           </form>
         </div>
+        {!isNativeApp && (
+          <a href={ANDROID_APK_URL} className="btn mt-4 min-h-12 w-full border border-theme surface text-sm">
+            <Download className="size-5 text-s-green" />{t('getAndroidApp')}
+          </a>
+        )}
         <p className="mt-auto pt-6 text-center text-xs text-2">
           <span dir="ltr">Sanad Company © 2026</span> · <a href="./privacy.html" target="_blank" rel="noreferrer" className="underline">{t('privacy')}</a>
           <br /><span dir="ltr">Created by <a href="https://wa.me/9647508418593" target="_blank" rel="noreferrer" className="font-extrabold text-[#25D366]">Saman</a></span>

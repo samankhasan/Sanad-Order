@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Download, LogOut, Moon, Sun, MonitorSmartphone, ShieldCheck, Trash2, FileText } from 'lucide-react'
+import { Download, LogOut, Moon, Sun, MonitorSmartphone, ShieldCheck, Smartphone, Trash2, FileText } from 'lucide-react'
 import { displayIdentity, normalizePhone } from '../lib/identity'
+import { ANDROID_APK_URL, isNativeApp } from '../lib/native'
 import CitySelect from '../components/CitySelect'
 import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
@@ -110,11 +111,12 @@ export default function Profile() {
           </button>
         )}
         <button onClick={async () => { await removeMyToken(); await signOut() }} className="btn btn-danger w-full"><LogOut className="size-5 rtl:-scale-x-100" />{t('signOut')}</button>
+        {!isNativeApp && <a href={ANDROID_APK_URL} className="btn btn-ghost w-full"><Smartphone className="size-5 text-s-green" />{t('getAndroidApp')}</a>}
         <a href="./privacy.html" target="_blank" rel="noreferrer" className="btn btn-ghost w-full"><FileText className="size-5" />{t('privacy')}</a>
         <button onClick={deleteAccount} className="min-h-12 w-full text-sm font-bold text-rose-600"><Trash2 className="me-1 inline size-4" />{t('deleteAccount')}</button>
         <div className="flex flex-col items-center gap-2 py-6 text-center">
           <img src={assetUrl('brands/sanad-mark.png')} alt="" className="h-10" />
-          <p className="text-xs text-2">Sanad Order · v1.4.0</p>
+          <p className="text-xs text-2">Sanad Order · v1.4.1</p>
         </div>
       </div>
     </div>
