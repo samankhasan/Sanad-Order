@@ -24,16 +24,20 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
       - run: npm ci
-      - name: Firebase config (google-services.json from repo secret)
+      - name: Firebase config (google-services.json)
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then
             echo "$GOOGLE_SERVICES_JSON" > google-services.json
+          elif [ -f firebase/google-services.json ]; then
+            cp firebase/google-services.json google-services.json
+          fi
+          if [ -f google-services.json ]; then
             echo "VITE_NATIVE_PUSH=1" >> $GITHUB_ENV
             echo "Push notifications: ENABLED"
           else
-            echo "::warning::GOOGLE_SERVICES_JSON secret not set — APK is built without push notifications"
+            echo "::warning::google-services.json missing — APK is built without push notifications"
           fi
       - run: npm run build
       - run: npx cap add android
