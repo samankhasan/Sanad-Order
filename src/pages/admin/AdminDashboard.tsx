@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { ErrorBox, Skeleton, StatusBadge } from '../../components/ui'
 import { dateTime, money } from '../../lib/format'
 import type { Order, OrderItem } from '../../lib/types'
+import VisitorStats from './VisitorStats'
 
 export default function AdminDashboard() {
   const { t, lang, catName } = usePrefs()
@@ -78,6 +79,8 @@ export default function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      <VisitorStats />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="card p-5">

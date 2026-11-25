@@ -47,7 +47,9 @@ jobs:
         run: npx capacitor-assets generate --android
         continue-on-error: true
       - name: Edge-to-edge MainActivity
-        run: cp native/android/MainActivity.java android/app/src/main/java/com/sanadcompany/sanadorder/MainActivity.java
+        run: |
+          cp native/android/MainActivity.java android/app/src/main/java/com/sanadcompany/sanadorder/MainActivity.java
+          mkdir -p android/app/src/main/res/raw && cp native/android/res/raw/* android/app/src/main/res/raw/
       - run: npx cap sync android
       - name: Gradle build
         working-directory: android

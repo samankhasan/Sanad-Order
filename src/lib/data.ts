@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import type { Category, Product } from './types'
+import type { Category, Product, Subcategory } from './types'
 
 let categoriesCache: Category[] | null = null
 
@@ -32,4 +32,17 @@ export function useProducts(categoryId?: string | null, opts: { includeHidden?: 
   }, [categoryId, opts.includeHidden])
   useEffect(() => { load() }, [load])
   return { products: data, error, reload: load }
+}
+
+export function useSubcategories(categoryId?: string | null, opts: { includeHidden?: boolean } = {}) {
+  const [data, setData] = useState<Subcategory[] | null>(null)
+  const load = useCallback(async () => {
+    let q = supabase.from('subcategories').select('*').order('sort_order').order('created_at')
+    if (categoryId) q = q.eq('category_id', categoryId)
+    if (!opts.includeHidden) q = q.eq('is_active', true)
+    const { data } = await q
+    setData((data as Subcategory[]) ?? [])
+  }, [categoryId, opts.includeHidden])
+  useEffect(() => { load() }, [load])
+  return { subcategories: data, reload: load }
 }

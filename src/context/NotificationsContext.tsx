@@ -7,6 +7,15 @@ import { usePrefs } from './PrefsContext'
 import { refreshPush } from '../lib/push'
 import type { AppNotification } from '../lib/types'
 
+let audio: HTMLAudioElement | null = null
+function playNotifySound() {
+  try {
+    audio ??= new Audio(`${import.meta.env.BASE_URL}sounds/notify.mp3`)
+    audio.currentTime = 0
+    audio.play().catch(() => {})
+  } catch { /* ignore */ }
+}
+
 interface Ctx {
   items: AppNotification[] | null
   unread: number
@@ -41,6 +50,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         if (n.target_user && n.target_user !== uid) return
         setItems(list => [n, ...(list ?? []).filter(x => x.id !== n.id)])
         setBanner(n)
+        playNotifySound()
         setTimeout(() => setBanner(b => (b?.id === n.id ? null : b)), 5000)
       })
       .subscribe()

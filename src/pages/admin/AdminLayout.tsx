@@ -8,6 +8,7 @@ export default function AdminLayout() {
     { to: '/admin', label: t('dashboard'), end: true },
     { to: '/admin/orders', label: t('manageOrders') },
     { to: '/admin/products', label: t('manageProducts') },
+    { to: '/admin/categories', label: t('categories') },
     { to: '/admin/customers', label: t('customers') },
     { to: '/admin/notify', label: t('notifications') }
   ]

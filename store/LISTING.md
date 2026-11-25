@@ -16,7 +16,7 @@ Everything Google Play Console asks for, ready to copy.
 
 ## Short description (max 80 characters)
 - **ckb:** داواکردنی بۆیە و ئامرازی Adan، FAB، دهانات الریاض بە ئاسانی و خێرایی
-- **ar:** اطلب دهانات عدن وفاب والرياض والعدد بسهولة وسرعة من شركة سند
+- **ar:** اطلب دهانات عدن وفاب والرياض والعدد بسهولة وسرعة من شركة ساناد
 - **en:** Order Adan, FAB, Riyadh Paints & tools from Sanad Company — fast and easy
 
 ## Full description
@@ -33,7 +33,7 @@ Sanad Order is the official ordering app of Sanad Company.
 Sign up with just your name, phone number and a password.
 
 **کوردی**
-Sanad Order ئەپی فەرمی داواکردنی کۆمپانیای سەنەدە.
+Sanad Order ئەپی فەرمی داواکردنی کۆمپانیای سانادە.
 • هەموو براندەکان: دهانات عدن، FAB، دهانات الریاض و ئامرازەکان
 • گەڕان بەدوای بەرهەم، بینینی قەبارە و نرخ
 • زیادکردن بۆ سەبەتە و ناردنی داواکاری لە چەند چرکەیەکدا
@@ -44,7 +44,7 @@ Sanad Order ئەپی فەرمی داواکردنی کۆمپانیای سەنەد
 تەنها بە ناو، ژمارەی مۆبایل و وشەی نهێنی هەژمار دروست بکە.
 
 **العربية**
-Sanad Order هو تطبيق الطلبات الرسمي لشركة سند.
+Sanad Order هو تطبيق الطلبات الرسمي لشركة ساناد.
 • جميع العلامات: دهانات عدن، فاب، دهانات الرياض والعدد
 • ابحث عن المنتجات واطلع على الأحجام والأسعار
 • أضف إلى السلة وأرسل طلبك خلال ثوانٍ

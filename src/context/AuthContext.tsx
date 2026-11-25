@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../lib/types'
+import { trackVisit } from '../lib/analytics'
 
 interface Auth {
   session: Session | null
@@ -28,11 +29,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session)
+      trackVisit(data.session?.user.id ?? null)
       await loadProfile(data.session?.user.id)
       setLoading(false)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s)
+      setTimeout(() => trackVisit(s?.user.id ?? null), 0)
       // defer: never await supabase calls inside this callback
       setTimeout(() => loadProfile(s?.user.id), 0)
     })

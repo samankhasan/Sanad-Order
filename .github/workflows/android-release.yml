@@ -40,6 +40,7 @@ jobs:
         run: |
           cp firebase/google-services.json android/app/
           cp native/android/MainActivity.java android/app/src/main/java/com/sanadcompany/sanadorder/MainActivity.java
+          mkdir -p android/app/src/main/res/raw && cp native/android/res/raw/* android/app/src/main/res/raw/
           npx capacitor-assets generate --android || true
       - run: npx cap sync android
       - name: Version (code = run number, name = package.json)

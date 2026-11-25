@@ -2,7 +2,8 @@ import { useRef, useState } from 'react'
 import { Camera, Trash2, X } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
 import { useToast } from '../../context/ToastContext'
-import { useCategories } from '../../lib/data'
+import { useCategories, useSubcategories } from '../../lib/data'
+import { subName } from './AdminCategories'
 import { supabase, IMAGE_BUCKET } from '../../lib/supabase'
 import { compressImage } from '../../lib/image'
 import { Sheet, Spinner } from '../../components/ui'
@@ -10,13 +11,14 @@ import { cn } from '../../lib/format'
 import { UNITS, type Product } from '../../lib/types'
 
 export default function ProductForm({ product, defaultCategory, onClose, onSaved }: { product: Product | null; defaultCategory: string; onClose: () => void; onSaved: () => void }) {
-  const { t, catName } = usePrefs()
+  const { t, catName, lang } = usePrefs()
   const toast = useToast()
   const { categories } = useCategories()
   const fileRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState<'save' | 'upload' | 'delete' | null>(null)
   const [f, setF] = useState({
     category_id: product?.category_id ?? defaultCategory,
+    subcategory_id: product?.subcategory_id ?? '',
     name: product?.name ?? '',
     description: product?.description ?? '',
     sku: product?.sku ?? '',
@@ -29,6 +31,7 @@ export default function ProductForm({ product, defaultCategory, onClose, onSaved
     sort_order: product?.sort_order ?? 0
   })
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF(s => ({ ...s, [k]: v }))
+  const { subcategories } = useSubcategories(f.category_id, { includeHidden: true })
 
   async function upload(file: File) {
     setBusy('upload')
@@ -45,7 +48,7 @@ export default function ProductForm({ product, defaultCategory, onClose, onSaved
   async function save() {
     if (!f.name.trim() || !f.category_id) return
     setBusy('save')
-    const payload = { ...f, price: Number(f.price) || 0, name: f.name.trim(), description: f.description || null, sku: f.sku || null, size: f.size || null, image_url: f.image_url || null }
+    const payload = { ...f, subcategory_id: f.subcategory_id || null, price: Number(f.price) || 0, name: f.name.trim(), description: f.description || null, sku: f.sku || null, size: f.size || null, image_url: f.image_url || null }
     const { error } = product
       ? await supabase.from('products').update(payload).eq('id', product.id)
       : await supabase.from('products').insert(payload)
@@ -72,10 +75,22 @@ export default function ProductForm({ product, defaultCategory, onClose, onSaved
           <p className="label">{t('category')}</p>
           <div className="grid grid-cols-2 gap-2">
             {categories?.map(c => (
-              <button key={c.id} onClick={() => set('category_id', c.id)} className={cn('btn py-2.5 text-sm', f.category_id === c.id ? 'text-white' : 'btn-ghost')} style={f.category_id === c.id ? { background: c.accent } : undefined}>{catName(c)}</button>
+              <button key={c.id} onClick={() => setF(s => ({ ...s, category_id: c.id, subcategory_id: '' }))} className={cn('btn py-2.5 text-sm', f.category_id === c.id ? 'text-white' : 'btn-ghost')} style={f.category_id === c.id ? { background: c.accent } : undefined}>{catName(c)}</button>
             ))}
           </div>
         </div>
+
+        {subcategories && subcategories.length > 0 && (
+          <div>
+            <p className="label">{t('category2')}</p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" aria-pressed={!f.subcategory_id} onClick={() => set('subcategory_id', '')} className="filter-chip">{t('noCategory')}</button>
+              {subcategories.map(s => (
+                <button type="button" key={s.id} aria-pressed={f.subcategory_id === s.id} onClick={() => set('subcategory_id', s.id)} className="filter-chip">{subName(s, lang)}</button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <p className="label">{t('image')}</p>

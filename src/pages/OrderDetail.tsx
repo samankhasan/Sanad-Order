@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext'
 import { supabase } from '../lib/supabase'
 import { notify } from '../lib/push'
 import { ErrorBox, PageHeader, Skeleton, Spinner, StatusBadge } from '../components/ui'
-import { cn, dateTime, money } from '../lib/format'
+import { assetUrl, cn, dateTime, money } from '../lib/format'
 import { ORDER_FLOW, type Order, type OrderItem, type OrderStatus, type Product } from '../lib/types'
 
 export default function OrderDetail() {
@@ -93,8 +93,32 @@ export default function OrderDetail() {
         right={<button aria-label={t('print')} onClick={() => window.print()} className="icon-btn -me-2"><Printer className="size-5" /></button>} />
 
       <div className="page-narrow px-g space-y-4 pb-4">
+        {/* printed invoice header */}
+        <div className="hidden print:block">
+          <div className="flex items-center justify-between gap-6 border-b-2 border-black pb-4">
+            <div className="flex items-center gap-4">
+              <img src={assetUrl('brands/sanad.png')} alt="Sanad Company" className="h-24 w-auto" />
+              <div>
+                <p className="text-2xl font-black">Sanad Company</p>
+                <p className="text-sm">کۆمپانیای ساناد · شركة ساناد</p>
+              </div>
+            </div>
+            <div className="text-end">
+              <p className="text-xl font-black">{t('invoice')}</p>
+              <p className="text-lg font-bold" dir="ltr">#{order.order_no}</p>
+              <p className="text-sm">{t('date')}: {dateTime(order.created_at, lang)}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-x-8 gap-y-1 text-sm">
+            <p><b>{t('customer')}:</b> {order.profiles?.full_name || '—'}</p>
+            {order.profiles?.shop_name && <p><b>{t('shopName')}:</b> {order.profiles.shop_name}</p>}
+            {order.profiles?.phone && <p dir="ltr"><b>{t('phone')}:</b> {order.profiles.phone}</p>}
+            {order.profiles?.city && <p><b>{t('city')}:</b> {order.profiles.city}</p>}
+          </div>
+          <div className="mt-3 h-1.5 sanad-stripe [print-color-adjust:exact] [-webkit-print-color-adjust:exact]" />
+        </div>
         {/* status timeline */}
-        <section className="card p-5">
+        <section className="card no-print p-5">
           <div className="mb-4 flex items-center justify-between"><StatusBadge status={order.status} /><span className="text-xs font-semibold text-2">{dateTime(order.updated_at, lang)}</span></div>
           {!cancelled ? (
             <ol className="flex items-start">
@@ -113,7 +137,7 @@ export default function OrderDetail() {
 
         {/* customer (admin view) */}
         {isAdmin && order.profiles && (
-          <section className="card p-4">
+          <section className="card no-print p-4">
             <p className="label">{t('customer')}</p>
             <p className="text-lg font-extrabold">{order.profiles.full_name || '—'}</p>
             <div className="mt-2 flex flex-wrap gap-2 text-sm">

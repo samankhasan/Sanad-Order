@@ -9,6 +9,8 @@ export const nativePushConfigured = env.VITE_NATIVE_PUSH === '1'
 export const isNative = Capacitor.isNativePlatform()
 
 export type PushState = 'unsupported' | 'default' | 'granted' | 'denied'
+export const CHANNEL_ID = 'sanad_alerts'
+export let lastPushError: string | null = null
 
 async function saveToken(token: string, platform: 'android' | 'ios' | 'web') {
   const { data } = await supabase.auth.getUser()
@@ -25,6 +27,17 @@ export async function removeMyToken() {
   } catch { /* ignore */ }
 }
 
+/** Real permission state (async, works on phones too). */
+export async function pushStateAsync(): Promise<PushState> {
+  if (isNative) {
+    if (!nativePushConfigured) return 'unsupported'
+    const { PushNotifications } = await import('@capacitor/push-notifications')
+    const p = await PushNotifications.checkPermissions()
+    return p.receive === 'granted' ? 'granted' : p.receive === 'denied' ? 'denied' : 'default'
+  }
+  return pushState()
+}
+
 export function pushState(): PushState {
   if (isNative) return nativePushConfigured ? 'default' : 'unsupported'
   if (!webPushConfigured || !('Notification' in window) || !('serviceWorker' in navigator)) return 'unsupported'
@@ -39,9 +52,12 @@ export async function enablePush(navigate: (path: string) => void): Promise<Push
     let perm = await PushNotifications.checkPermissions()
     if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') perm = await PushNotifications.requestPermissions()
     if (perm.receive !== 'granted') return 'denied'
-    await PushNotifications.createChannel({ id: 'sanad_default', name: 'Sanad Order', importance: 5, sound: 'default', vibration: true, visibility: 1 }).catch(() => {})
+    // Android channels are immutable: a new id carries the Sanad sound (res/raw/sanad_notify.mp3)
+    await PushNotifications.deleteChannel({ id: 'sanad_default' }).catch(() => {})
+    await PushNotifications.createChannel({ id: CHANNEL_ID, name: 'Sanad Order', description: 'Orders & offers', importance: 5, sound: 'sanad_notify.mp3', vibration: true, lights: true, lightColor: '#0284D6', visibility: 1 }).catch(() => {})
     await PushNotifications.removeAllListeners()
     await PushNotifications.addListener('registration', t => saveToken(t.value, Capacitor.getPlatform() as 'android' | 'ios'))
+    await PushNotifications.addListener('registrationError', e => { lastPushError = String(e.error); console.error('push registration', e) })
     await PushNotifications.addListener('pushNotificationActionPerformed', a => {
       const link = a.notification.data?.link
       navigate(link || '/notifications')
@@ -73,13 +89,13 @@ export async function enablePush(navigate: (path: string) => void): Promise<Push
   return 'granted'
 }
 
-/** Silently re-register on app start if permission was already given. */
+/** On app start: on phones ask once for permission (Android 13+ requirement), then always re-register. */
 export async function refreshPush(navigate: (path: string) => void) {
   try {
     if (isNative && nativePushConfigured) {
       const { PushNotifications } = await import('@capacitor/push-notifications')
       const p = await PushNotifications.checkPermissions()
-      if (p.receive === 'granted') await enablePush(navigate)
+      if (p.receive === 'granted' || p.receive === 'prompt' || p.receive === 'prompt-with-rationale') await enablePush(navigate)
     } else if (!isNative && webPushConfigured && 'Notification' in window && Notification.permission === 'granted') {
       await enablePush(navigate)
     }
