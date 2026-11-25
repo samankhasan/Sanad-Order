@@ -55,7 +55,8 @@ export async function uploadOptimized(file: Blob, folder: string, preset: Preset
   const { full, thumb } = await compressImage(file, preset)
   const id = crypto.randomUUID()
   const path = `${folder}/${id}.webp`
-  const opts = { contentType: 'image/webp', cacheControl: '31536000', upsert: true }
+  // brand-new random names: plain insert (no upsert), which only needs the INSERT policy
+  const opts = { contentType: 'image/webp', cacheControl: '31536000', upsert: false }
   const [a, b] = await Promise.all([
     supabase.storage.from(IMAGE_BUCKET).upload(path, full, opts),
     supabase.storage.from(IMAGE_BUCKET).upload(`${folder}/${id}_t.webp`, thumb, opts)

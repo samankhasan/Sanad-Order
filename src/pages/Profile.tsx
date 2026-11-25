@@ -116,7 +116,7 @@ export default function Profile() {
         <button onClick={deleteAccount} className="min-h-12 w-full text-sm font-bold text-rose-600"><Trash2 className="me-1 inline size-4" />{t('deleteAccount')}</button>
         <div className="flex flex-col items-center gap-2 py-6 text-center">
           <img src={assetUrl('brands/sanad-mark.png')} alt="" className="h-10" />
-          <p className="text-xs text-2">Sanad Order · v1.6.0</p>
+          <p className="text-xs text-2">Sanad Order · v1.6.1</p>
         </div>
       </div>
     </div>
