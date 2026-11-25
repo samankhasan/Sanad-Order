@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { EyeOff, GripVertical, ImageOff, Info, PackageOpen, Plus, Search, Zap } from 'lucide-react'
@@ -33,12 +33,15 @@ export default function AdminProducts() {
   const toast = useToast()
 
   // drag & drop ordering: only inside one brand and without a search filter
-  const canSort = !!cat && !q.trim()
+  // reorder in 'All' or inside one brand; disabled only while searching
+  const canSort = !q.trim()
   const [order, setOrder] = useState<Product[]>([])
   useEffect(() => { setOrder(list) }, [list])
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
+    // mouse: grab anywhere on the row (a plain click still opens the product)
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    // touch: long-press, so normal scrolling keeps working
+    useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
   // one-click: re-compress every stored picture and create missing thumbnails
@@ -92,7 +95,7 @@ export default function AdminProducts() {
       <button disabled={!!optimizing || !products?.length} onClick={optimizeAll} className="flex min-h-10 items-center gap-1.5 rounded-xl px-2 text-xs font-bold text-brand disabled:opacity-60">
         <Zap className="size-4" />{optimizing ? `${t('optimizing')} ${optimizing}` : t('optimizeImages')}
       </button>
-      {list.length > 0 && !canSort && (
+      {list.length > 1 && canSort && (
         <p className="flex items-center gap-2 px-1 text-xs font-semibold text-2"><Info className="size-4 shrink-0" />{t('reorderHint')}</p>
       )}
       {list.length > 0 && (
@@ -122,10 +125,10 @@ function ProductRow({ p, c, sub, sortable, onOpen }: { p: Product; c?: Category;
   const { t, lang, catName } = usePrefs()
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: !sortable })
   return (
-    <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn('relative flex items-center surface', isDragging && 'z-10 rounded-2xl shadow-2xl ring-2 ring-[var(--color-brand)]', !p.is_active && 'opacity-50')}>
+    <li ref={setNodeRef} {...(sortable ? listeners : {})} style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn('relative flex items-center surface', sortable && 'cursor-grab active:cursor-grabbing select-none', isDragging && 'z-10 rounded-2xl shadow-2xl ring-2 ring-[var(--color-brand)]', !p.is_active && 'opacity-50')}>
       {sortable && (
-        <button ref={setActivatorNodeRef} {...attributes} {...listeners} aria-label="drag" className="grid h-full min-h-[72px] w-11 shrink-0 cursor-grab touch-none place-items-center text-2 active:cursor-grabbing">
+        <button ref={setActivatorNodeRef} {...attributes} aria-label="drag" className="grid h-full min-h-[72px] w-11 shrink-0 cursor-grab touch-none place-items-center text-2 active:cursor-grabbing">
           <GripVertical className="size-5" />
         </button>
       )}
