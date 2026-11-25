@@ -95,6 +95,18 @@ async function pushToTokens(admin: ReturnType<typeof createClient>, tokens: stri
 
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  // GET = health check: reports only whether Firebase is configured and Google accepts the key (no secrets returned)
+  if (req.method === 'GET') {
+    const raw = Deno.env.get('FIREBASE_SERVICE_ACCOUNT')
+    if (!raw) return json({ configured: false })
+    try {
+      const sa = JSON.parse(raw)
+      await accessToken(sa)
+      return json({ configured: true, project_id: sa.project_id, google_auth: 'ok' })
+    } catch (e) {
+      return json({ configured: true, google_auth: 'failed', reason: String((e as Error).message).slice(0, 200) })
+    }
+  }
   try {
     const url = Deno.env.get('SUPABASE_URL')!
     const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
