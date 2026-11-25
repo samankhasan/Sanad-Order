@@ -26,9 +26,9 @@ export default function Notifications() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <PageHeader back title={t('notifications')} />
-      <div className="space-y-3 px-4">
+      <div className="page-narrow px-g space-y-3">
         {state === 'default' && (
           <div className="rise card flex items-center gap-3 p-4">
             <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-s-blue text-white"><BellRing className="size-6" /></span>

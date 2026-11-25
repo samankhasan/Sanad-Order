@@ -3,13 +3,14 @@ import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
 import { money, cn } from '../lib/format'
 import type { Product } from '../lib/types'
+import { haptic } from '../lib/native'
 
 export default function ProductCard({ product, accent, onOpen, index = 0 }: { product: Product; accent?: string; onOpen: () => void; index?: number }) {
   const { t, lang } = usePrefs()
   const cart = useCart()
   const qty = cart.qtyOf(product.id)
   return (
-    <div className="rise card group flex flex-col overflow-hidden" style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}>
+    <div className="rise card group flex min-w-0 flex-col overflow-hidden" style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}>
       <button onClick={onOpen} className="relative aspect-square w-full overflow-hidden bg-white">
         {product.image_url
           ? <img src={product.image_url} alt={product.name} loading="lazy" className="size-full object-contain p-3 transition duration-500 group-hover:scale-105" />
@@ -29,8 +30,8 @@ export default function ProductCard({ product, accent, onOpen, index = 0 }: { pr
           <button
             aria-label={t('addToCart')}
             disabled={!product.in_stock}
-            onClick={() => cart.add(product)}
-            className={cn('grid size-9 shrink-0 place-items-center rounded-xl text-white shadow-md transition active:scale-90 disabled:opacity-30')}
+            onClick={() => { haptic(); cart.add(product) }}
+            className={cn('grid size-10 shrink-0 place-items-center rounded-xl text-white shadow-md transition active:scale-90 disabled:opacity-30')}
             style={{ background: accent || '#0b1220' }}
           >
             <Plus className="size-5" />

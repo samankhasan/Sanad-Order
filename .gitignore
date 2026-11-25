@@ -1,8 +1,8 @@
 node_modules
 dist
 dev-dist
-android
-ios
+/android
+/ios
 .env
 .env.*
 !.env.example
@@ -11,3 +11,6 @@ ios
 *.tsbuildinfo
 google-services.json
 !firebase/google-services.json
+*.jks
+*.keystore
+GITHUB-SECRETS.txt

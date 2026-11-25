@@ -1,7 +1,7 @@
 {
   "name": "sanad-order",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -11,10 +11,16 @@
   },
   "dependencies": {
     "@capacitor/android": "^7.4.0",
+    "@capacitor/app": "^7.1.2",
     "@capacitor/core": "^7.4.0",
+    "@capacitor/haptics": "^7.0.5",
     "@capacitor/ios": "^7.4.0",
+    "@capacitor/keyboard": "^7.0.6",
     "@capacitor/push-notifications": "^7.0.7",
+    "@capacitor/splash-screen": "^7.0.5",
+    "@capacitor/status-bar": "^7.0.6",
     "@supabase/supabase-js": "^2.119.2",
+    "capacitor-plugin-safe-area": "^4.0.3",
     "firebase": "^12.19.0",
     "lucide-react": "^0.540.0",
     "react": "^19.1.0",

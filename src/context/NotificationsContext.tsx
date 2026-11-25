@@ -67,7 +67,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       {banner && (
         <button
           onClick={() => { setBanner(null); nav(banner.link || '/notifications') }}
-          className="toast-in fixed inset-x-3 top-[calc(env(safe-area-inset-top)+10px)] z-[90] mx-auto flex max-w-md items-start gap-3 rounded-3xl border border-theme surface p-4 text-start shadow-2xl"
+          className="toast-in fixed inset-x-3 top-[calc(var(--sat)+10px)] z-[90] mx-auto flex max-w-md items-start gap-3 rounded-3xl border border-theme surface p-4 text-start shadow-2xl"
         >
           <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-ink text-white dark:bg-white dark:text-ink"><Bell className="size-5" /></span>
           <span className="min-w-0 flex-1">

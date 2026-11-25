@@ -32,6 +32,12 @@
 ئیمەیڵی بەڕێوەبەر لە خشتەی `admin_emails` ـی Supabase دانراوە (لە کۆددا نییە).
 هەر کەسێک بەو ئیمەیڵە هەژمار دروست بکات، خۆکار دەبێت بە بەڕێوەبەر. لە پانێڵی «کڕیاران» دەتوانیت بەڕێوەبەری تر زیاد بکەیت.
 
+## Google Play
+1. چوار secret ی واژوو لە GitHub دابنێ: `ANDROID_KEYSTORE_BASE64`، `ANDROID_KEYSTORE_PASSWORD`، `ANDROID_KEY_ALIAS`، `ANDROID_KEY_PASSWORD`
+2. Actions ← **Android release (Google Play)** ← Run workflow ← فایلی `.aab` دابەزێنە
+3. لە Play Console بیخە ناو Internal testing / Production
+4. هەموو دەق و وێنەکانی لیست: `store/LISTING.md` و `store/`
+
 ## ستاک
 React 19 · TypeScript · Vite · Tailwind CSS 4 · Supabase (Auth, Postgres + RLS, Storage, Realtime) · Capacitor 7 · vite-plugin-pwa
 

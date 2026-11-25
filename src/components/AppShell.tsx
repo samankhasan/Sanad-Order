@@ -1,16 +1,20 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Home, ShoppingBag, ReceiptText, UserRound, LayoutDashboard, WifiOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
-import { cn } from '../lib/format'
+import { assetUrl } from '../lib/format'
+import { initBackButton } from '../lib/native'
+
+const ROOTS = ['/', '/cart', '/orders', '/profile', '/admin']
 
 export default function AppShell() {
   const { t } = usePrefs()
   const { count } = useCart()
   const { isAdmin } = useAuth()
   const { pathname } = useLocation()
+  const nav = useNavigate()
   const [online, setOnline] = useState(navigator.onLine)
 
   useEffect(() => { window.scrollTo(0, 0) }, [pathname])
@@ -20,6 +24,20 @@ export default function AppShell() {
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
   }, [])
 
+  // Android hardware back: sheet → previous page → tab root → home → minimise
+  useEffect(() => {
+    let off = () => {}
+    initBackButton(
+      () => { const p = window.location.hash.replace(/^#/, ''); return p === '' || p === '/' },
+      () => {
+        const p = window.location.hash.replace(/^#/, '') || '/'
+        if (ROOTS.includes(p)) nav('/', { replace: true })
+        else nav(-1)
+      }
+    ).then(f => { off = f })
+    return () => off()
+  }, [nav])
+
   const tabs = [
     { to: '/', icon: Home, label: t('home'), end: true },
     { to: '/cart', icon: ShoppingBag, label: t('cart'), badge: count },
@@ -28,30 +46,42 @@ export default function AppShell() {
     { to: '/profile', icon: UserRound, label: t('profile') }
   ]
 
+  const items = tabs.map(tab => (
+    <NavLink key={tab.to} to={tab.to} end={tab.end} replace className="nav-item">
+      {({ isActive }) => (
+        <>
+          <span className="nav-indicator">
+            <tab.icon className="size-[22px]" strokeWidth={isActive ? 2.5 : 2} />
+            {!!tab.badge && (
+              <span key={tab.badge} className="bump absolute -top-1 start-[34px] grid h-[18px] min-w-[18px] place-items-center rounded-full bg-s-red px-1 text-[10px] font-black leading-none text-white">
+                {tab.badge > 99 ? '99+' : tab.badge}
+              </span>
+            )}
+          </span>
+          <span className="nav-label">{tab.label}</span>
+        </>
+      )}
+    </NavLink>
+  ))
+
   return (
-    <div className="min-h-dvh pb-28">
+    <div className="with-rail min-h-dvh">
       {!online && (
-        <div className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-amber-500 py-1.5 text-xs font-bold text-black safe-top">
+        <div className="fixed inset-x-0 top-0 z-[60] flex items-center justify-center gap-2 bg-amber-500 pb-1.5 pt-[calc(var(--sat)+6px)] text-xs font-bold text-black">
           <WifiOff className="size-4" /> {t('offline')}
         </div>
       )}
-      <Outlet />
-      <nav className="no-print fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),12px)]">
-        <div className="mx-auto flex max-w-md items-stretch justify-around rounded-[28px] border border-theme bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] p-1.5 shadow-[0_12px_40px_-12px_rgb(0_0_0/0.25)] backdrop-blur-xl">
-          {tabs.map(tab => (
-            <NavLink key={tab.to} to={tab.to} end={tab.end}
-              className={({ isActive }) => cn(
-                'relative flex flex-1 flex-col items-center gap-0.5 rounded-[22px] py-2 text-[11px] font-bold transition',
-                isActive ? 'bg-ink text-white dark:bg-white dark:text-ink' : 'text-2'
-              )}>
-              <tab.icon className="size-5" strokeWidth={2.2} />
-              <span className="max-w-full truncate px-1">{tab.label}</span>
-              {!!tab.badge && (
-                <span key={tab.badge} className="bump absolute top-1 start-[55%] grid min-w-5 place-items-center rounded-full bg-s-red px-1 text-[10px] font-black text-white ring-2 ring-[var(--surface)]">{tab.badge}</span>
-              )}
-            </NavLink>
-          ))}
-        </div>
+      <main className="pb-nav"><Outlet /></main>
+
+      {/* phones: bottom navigation bar */}
+      <nav className="nav-bar no-print md:hidden" aria-label="main">
+        <div className="mx-auto flex max-w-xl ps-[var(--sal)] pe-[var(--sar)]">{items}</div>
+      </nav>
+
+      {/* tablets & desktop: navigation rail */}
+      <nav className="nav-rail no-print max-md:hidden" aria-label="main">
+        <img src={assetUrl('brands/sanad-mark.png')} alt="Sanad" className="mb-4 size-11 object-contain" />
+        {items}
       </nav>
     </div>
   )
