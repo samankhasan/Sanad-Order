@@ -28,3 +28,9 @@ export function cn(...c: (string | false | null | undefined)[]) {
 export function subName(s: { name_ku: string; name_ar: string | null; name_en: string | null }, lang: string) {
   return (lang === 'ar' ? s.name_ar : lang === 'en' ? s.name_en : s.name_ku) || s.name_ku
 }
+
+/** Small version of an uploaded picture (created at upload time as <name>_t.webp). */
+export function thumbOf(url: string | null | undefined) {
+  if (!url) return ''
+  return url.includes('/product-images/') && url.endsWith('.webp') && !url.endsWith('_t.webp') ? url.replace(/\.webp$/, '_t.webp') : url
+}

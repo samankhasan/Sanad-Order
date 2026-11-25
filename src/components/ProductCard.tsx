@@ -2,6 +2,7 @@ import { ImageOff, Plus } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
 import { money, cn } from '../lib/format'
+import { Thumb } from './ui'
 import type { Product } from '../lib/types'
 import { haptic } from '../lib/native'
 
@@ -13,7 +14,7 @@ export default function ProductCard({ product, accent, onOpen, index = 0 }: { pr
     <div className="rise card group flex min-w-0 flex-col overflow-hidden" style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}>
       <button onClick={onOpen} className="relative aspect-square w-full overflow-hidden bg-white">
         {product.image_url
-          ? <img src={product.image_url} alt={product.name} loading="lazy" className="size-full object-contain p-3 transition duration-500 group-hover:scale-105" />
+          ? <Thumb src={product.image_url} alt={product.name} className="size-full object-contain p-3 transition duration-500 group-hover:scale-105" />
           : <div className="grid size-full place-items-center text-gray-300"><ImageOff className="size-10" /></div>}
         {!product.in_stock && <span className="chip absolute top-2 start-2 bg-ink/85 text-white">{t('outOfStock')}</span>}
         {qty > 0 && <span key={qty} className="bump absolute top-2 end-2 grid min-w-7 place-items-center rounded-full px-2 py-1 text-xs font-black text-white" style={{ background: accent || '#0b1220' }}>{qty}</span>}

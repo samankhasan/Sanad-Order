@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { EyeOff, GripVertical, ImageOff, Info, PackageOpen, Plus, Search } from 'lucide-react'
+import { EyeOff, GripVertical, ImageOff, Info, PackageOpen, Plus, Search, Zap } from 'lucide-react'
+import { PRESETS, reoptimizeStored } from '../../lib/image'
 import { usePrefs } from '../../context/PrefsContext'
 import { useCategories, useProducts, useSubcategories } from '../../lib/data'
 import { subName } from './AdminCategories'
-import { EmptyState, ErrorBox, Skeleton } from '../../components/ui'
+import { EmptyState, ErrorBox, Skeleton, Thumb } from '../../components/ui'
 import ProductForm from './ProductForm'
 import { cn, money } from '../../lib/format'
 import type { Category, Product, Subcategory } from '../../lib/types'
@@ -40,6 +41,23 @@ export default function AdminProducts() {
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
+  // one-click: re-compress every stored picture and create missing thumbnails
+  const [optimizing, setOptimizing] = useState<string | null>(null)
+  async function optimizeAll() {
+    const { data: notes } = await supabase.from('notifications').select('image_url').not('image_url', 'is', null)
+    const jobs = [
+      ...(products ?? []).filter(p => p.image_url).map(p => ({ url: p.image_url!, preset: PRESETS.product })),
+      ...((notes as { image_url: string }[] | null) ?? []).map(n => ({ url: n.image_url, preset: PRESETS.banner }))
+    ]
+    let saved = 0
+    for (let i = 0; i < jobs.length; i++) {
+      setOptimizing(`${i + 1}/${jobs.length}`)
+      try { saved += await reoptimizeStored(jobs[i].url, jobs[i].preset) } catch (e) { console.warn('optimise', jobs[i].url, e) }
+    }
+    setOptimizing(null)
+    toast(`${t('optimizedDone')} ${Math.round(saved / 1024)} KB`)
+  }
+
   async function onDragEnd(e: DragEndEvent) {
     const { active, over } = e
     if (!over || active.id === over.id) return
@@ -71,6 +89,9 @@ export default function AdminProducts() {
       {error && <ErrorBox message={error} onRetry={reload} />}
       {!products && <Skeleton className="h-96 rounded-3xl" />}
       {products && list.length === 0 && <EmptyState icon={<PackageOpen className="size-9" />} title={t('noProducts')} action={<button onClick={() => setEditing('new')} className="btn btn-primary"><Plus className="size-5" />{t('newProduct')}</button>} />}
+      <button disabled={!!optimizing || !products?.length} onClick={optimizeAll} className="flex min-h-10 items-center gap-1.5 rounded-xl px-2 text-xs font-bold text-brand disabled:opacity-60">
+        <Zap className="size-4" />{optimizing ? `${t('optimizing')} ${optimizing}` : t('optimizeImages')}
+      </button>
       {list.length > 0 && !canSort && (
         <p className="flex items-center gap-2 px-1 text-xs font-semibold text-2"><Info className="size-4 shrink-0" />{t('reorderHint')}</p>
       )}
@@ -110,7 +131,7 @@ function ProductRow({ p, c, sub, sortable, onOpen }: { p: Product; c?: Category;
       )}
       <button onClick={onOpen} className={cn('flex min-w-0 flex-1 items-center gap-3 py-3 pe-3 text-start transition hover:bg-[var(--surface-2)]', !sortable && 'ps-3')}>
         <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-white">
-          {p.image_url ? <img src={p.image_url} alt="" className="size-full object-contain p-1" loading="lazy" draggable={false} /> : <ImageOff className="size-5 text-gray-300" />}
+          {p.image_url ? <Thumb src={p.image_url} className="size-full object-contain p-1" /> : <ImageOff className="size-5 text-gray-300" />}
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold">{p.name}</p>

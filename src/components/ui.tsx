@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Loader2, Minus, Plus, RefreshCw } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
-import { assetUrl, cn } from '../lib/format'
+import { assetUrl, cn, thumbOf } from '../lib/format'
 import type { Category, OrderStatus } from '../lib/types'
 import { haptic, pushBackHandler } from '../lib/native'
 
@@ -185,5 +185,15 @@ export function ErrorBox({ message, onRetry }: { message: string; onRetry?: () =
       <p className="mt-1 break-words opacity-80">{message}</p>
       {onRetry && <button onClick={onRetry} className="mt-3 font-bold underline">{t('retry')}</button>}
     </div>
+  )
+}
+
+/** Lazy image that loads the light thumbnail first and falls back to the full picture. */
+export function Thumb({ src, alt = '', className, full }: { src: string; alt?: string; className?: string; full?: boolean }) {
+  const [cur, setCur] = useState(full ? src : thumbOf(src))
+  useEffect(() => { setCur(full ? src : thumbOf(src)) }, [src, full])
+  return (
+    <img src={cur} alt={alt} className={className} loading="lazy" decoding="async" draggable={false}
+      onError={() => { if (cur !== src) setCur(src) }} />
   )
 }

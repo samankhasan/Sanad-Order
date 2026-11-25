@@ -4,8 +4,8 @@ import { usePrefs } from '../../context/PrefsContext'
 import { useToast } from '../../context/ToastContext'
 import { useCategories, useSubcategories } from '../../lib/data'
 import { subName } from './AdminCategories'
-import { supabase, IMAGE_BUCKET } from '../../lib/supabase'
-import { compressImage } from '../../lib/image'
+import { supabase } from '../../lib/supabase'
+import { PRESETS, uploadOptimized } from '../../lib/image'
 import { Sheet, Spinner } from '../../components/ui'
 import { cn } from '../../lib/format'
 import { UNITS, type Product } from '../../lib/types'
@@ -36,11 +36,7 @@ export default function ProductForm({ product, defaultCategory, onClose, onSaved
   async function upload(file: File) {
     setBusy('upload')
     try {
-      const blob = await compressImage(file)
-      const path = `${f.category_id}/${crypto.randomUUID()}.webp`
-      const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, blob, { contentType: 'image/webp', cacheControl: '31536000' })
-      if (error) throw error
-      set('image_url', supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl)
+      set('image_url', await uploadOptimized(file, f.category_id, PRESETS.product))
     } catch (e) { toast((e as Error).message, 'error') }
     setBusy(null)
   }
