@@ -6,6 +6,8 @@ export interface Profile {
   full_name: string | null
   phone: string | null
   shop_name: string | null
+  username?: string | null
+  address?: string | null
   city: string | null
   role: Role
   lang?: 'ku' | 'ar' | 'en'
@@ -62,7 +64,7 @@ export interface Order {
   items_count: number
   created_at: string
   updated_at: string
-  profiles?: Pick<Profile, 'full_name' | 'phone' | 'shop_name' | 'city'> | null
+  profiles?: Pick<Profile, 'full_name' | 'phone' | 'shop_name' | 'city' | 'address' | 'username'> | null
 }
 
 export interface OrderItem {

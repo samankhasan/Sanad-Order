@@ -15,7 +15,7 @@ export default function AdminOrders() {
   const [q, setQ] = useState('')
 
   async function load() {
-    const { data, error } = await supabase.from('orders').select('*, profiles(full_name, phone, shop_name, city)').order('created_at', { ascending: false }).limit(1000)
+    const { data, error } = await supabase.from('orders').select('*, profiles(full_name, phone, shop_name, city, address, username)').order('created_at', { ascending: false }).limit(1000)
     if (error) setError(error.message); else setOrders(data as Order[])
   }
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function AdminOrders() {
     const s = q.trim().toLowerCase()
     return (orders ?? []).filter(o =>
       (filter === 'all' || o.status === filter) &&
-      (!s || String(o.order_no).includes(s) || [o.profiles?.full_name, o.profiles?.shop_name, o.profiles?.phone].some(v => v?.toLowerCase().includes(s))))
+      (!s || String(o.order_no).includes(s) || [o.profiles?.full_name, o.profiles?.username, o.profiles?.phone, o.profiles?.address, o.profiles?.city].some(v => v?.toLowerCase().includes(s))))
   }, [orders, filter, q])
 
   const count = (s: OrderStatus) => orders?.filter(o => o.status === s).length ?? 0

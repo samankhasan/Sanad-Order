@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Download, LogOut, Moon, Sun, MonitorSmartphone, ShieldCheck, Trash2, FileText } from 'lucide-react'
-import { displayIdentity } from '../lib/identity'
+import { displayIdentity, normalizePhone } from '../lib/identity'
+import CitySelect from '../components/CitySelect'
 import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -18,12 +19,12 @@ export default function Profile() {
   const { t, lang, setLang, theme, setTheme } = usePrefs()
   const { profile, session, signOut, refreshProfile, isAdmin } = useAuth()
   const toast = useToast()
-  const [f, setF] = useState({ full_name: '', phone: '', shop_name: '', city: '' })
+  const [f, setF] = useState({ full_name: '', username: '', phone: '', city: '', address: '' })
   const [busy, setBusy] = useState(false)
   const [canInstall, setCanInstall] = useState(!!deferredPrompt)
 
   useEffect(() => {
-    if (profile) setF({ full_name: profile.full_name ?? '', phone: profile.phone ?? '', shop_name: profile.shop_name ?? '', city: profile.city ?? '' })
+    if (profile) setF({ full_name: profile.full_name ?? '', username: profile.username ?? '', phone: profile.phone ?? '', city: profile.city ?? '', address: profile.address ?? '' })
   }, [profile])
   useEffect(() => {
     const h = () => setCanInstall(true)
@@ -33,8 +34,16 @@ export default function Profile() {
 
   async function save() {
     if (!session) return
+    const username = f.username.trim().toLowerCase()
+    if (username && username !== (profile?.username ?? '')) {
+      const { data: free } = await supabase.rpc('username_available', { p_username: username })
+      if (!free) { toast(t('usernameTaken'), 'error'); return }
+    }
     setBusy(true)
-    const { error } = await supabase.from('profiles').update(f).eq('id', session.user.id)
+    const { error } = await supabase.from('profiles').update({
+      full_name: f.full_name.trim() || null, username: username || null,
+      phone: f.phone ? normalizePhone(f.phone) : null, city: f.city || null, address: f.address.trim() || null
+    }).eq('id', session.user.id)
     setBusy(false)
     if (error) toast(error.message, 'error'); else { toast(t('saved')); refreshProfile() }
   }
@@ -59,7 +68,7 @@ export default function Profile() {
           <div className="grid size-16 place-items-center rounded-3xl bg-ink text-2xl font-black text-white dark:bg-white dark:text-ink">{initials}</div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-extrabold">{profile?.full_name || '—'}</p>
-            <p className="truncate text-sm text-2" dir="ltr">{displayIdentity(session?.user.email, profile?.phone)}</p>
+            <p className="truncate text-sm text-2" dir="ltr">{profile?.username ? `@${profile.username}` : displayIdentity(session?.user.email, profile?.phone)}</p>
             {isAdmin && <span className="chip mt-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"><ShieldCheck className="size-3.5" />Admin</span>}
           </div>
         </section>
@@ -68,10 +77,11 @@ export default function Profile() {
           <h2 className="font-extrabold">{t('editProfile')}</h2>
           <div><label className="label">{t('fullName')}</label><input className="field" value={f.full_name} onChange={set('full_name')} /></div>
           <div className="grid gap-3 xs:grid-cols-2">
+            <div><label className="label">{t('username')}</label><input className="field" dir="ltr" autoCapitalize="none" maxLength={30} value={f.username} onChange={e => setF({ ...f, username: e.target.value.replace(/[^A-Za-z0-9._]/g, '').toLowerCase() })} /></div>
             <div><label className="label">{t('phone')}</label><input className="field" dir="ltr" inputMode="tel" value={f.phone} onChange={set('phone')} /></div>
-            <div><label className="label">{t('city')}</label><input className="field" value={f.city} onChange={set('city')} /></div>
           </div>
-          <div><label className="label">{t('shopName')}</label><input className="field" value={f.shop_name} onChange={set('shop_name')} /></div>
+          <div><label className="label">{t('selectCity')}</label><CitySelect value={f.city} onChange={city => setF({ ...f, city })} /></div>
+          <div><label className="label">{t('fullAddress')}</label><textarea rows={2} className="field resize-none" value={f.address} onChange={e => setF({ ...f, address: e.target.value })} /></div>
           <button disabled={busy} onClick={save} className="btn btn-primary w-full">{busy && <Spinner />}{t('save')}</button>
         </section>
 
@@ -104,7 +114,7 @@ export default function Profile() {
         <button onClick={deleteAccount} className="min-h-12 w-full text-sm font-bold text-rose-600"><Trash2 className="me-1 inline size-4" />{t('deleteAccount')}</button>
         <div className="flex flex-col items-center gap-2 py-6 text-center">
           <img src={assetUrl('brands/sanad-mark.png')} alt="" className="h-10" />
-          <p className="text-xs text-2">Sanad Order · v1.2.1</p>
+          <p className="text-xs text-2">Sanad Order · v1.3.0</p>
         </div>
       </div>
     </div>

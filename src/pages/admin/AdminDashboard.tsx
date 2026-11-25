@@ -8,6 +8,7 @@ import { ErrorBox, Skeleton, StatusBadge } from '../../components/ui'
 import { dateTime, money } from '../../lib/format'
 import type { Order, OrderItem } from '../../lib/types'
 import VisitorStats from './VisitorStats'
+import { placeLabel } from '../../lib/iraq'
 
 export default function AdminDashboard() {
   const { t, lang, catName } = usePrefs()
@@ -20,7 +21,7 @@ export default function AdminDashboard() {
   async function load() {
     const since = new Date(); since.setDate(1); since.setHours(0, 0, 0, 0)
     const [o, it, c] = await Promise.all([
-      supabase.from('orders').select('*, profiles(full_name, phone, shop_name, city)').order('created_at', { ascending: false }).limit(500),
+      supabase.from('orders').select('*, profiles(full_name, phone, shop_name, city, address, username)').order('created_at', { ascending: false }).limit(500),
       supabase.from('order_items').select('*, orders!inner(status, created_at)').gte('orders.created_at', since.toISOString()).neq('orders.status', 'cancelled').limit(5000),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer')
     ])
@@ -127,7 +128,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
         <Link key={o.id} to={`/orders/${o.id}`} className="flex items-center gap-3 p-4 transition hover:bg-[var(--surface-2)]">
           <span className="grid size-12 shrink-0 place-items-center rounded-2xl surface-2 text-xs font-black" dir="ltr">#{o.order_no}</span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold">{o.profiles?.shop_name || o.profiles?.full_name || '—'}</p>
+            <p className="truncate text-sm font-bold">{o.profiles?.full_name || o.profiles?.shop_name || '—'}{o.profiles?.city && <span className="font-semibold text-2"> · {placeLabel(o.profiles.city, lang)}</span>}</p>
             <p className="truncate text-xs text-2">{dateTime(o.created_at, lang)} · {o.items_count} {t('items')}</p>
           </div>
           <div className="flex flex-col items-end gap-1">

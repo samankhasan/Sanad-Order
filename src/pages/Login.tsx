@@ -1,12 +1,17 @@
 import { useState, type FormEvent } from 'react'
-import { Eye, EyeOff, Globe, Lock, Phone, Store, UserRound } from 'lucide-react'
+import { AtSign, Eye, EyeOff, Globe, Home, Lock, Mail, Phone, UserRound } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { usePrefs } from '../context/PrefsContext'
 import { useToast } from '../context/ToastContext'
 import { Spinner } from '../components/ui'
+import CitySelect from '../components/CitySelect'
 import { assetUrl, cn } from '../lib/format'
 import { LANGS } from '../lib/i18n'
-import { isEmail, normalizePhone, toAuthEmail } from '../lib/identity'
+import { isEmail, normalizePhone } from '../lib/identity'
+import { isNativeApp } from '../lib/native'
+
+const SITE_URL = 'https://samankhasan.github.io/Sanad-Order/'
+const empty = { id: '', password: '', full_name: '', username: '', email: '', phone: '', city: '', address: '' }
 
 export default function Login() {
   const { t, lang, setLang } = usePrefs()
@@ -14,31 +19,42 @@ export default function Login() {
   const [mode, setMode] = useState<'in' | 'up'>('in')
   const [busy, setBusy] = useState(false)
   const [show, setShow] = useState(false)
-  const [f, setF] = useState({ id: '', password: '', full_name: '', shop_name: '' })
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value })
+  const [f, setF] = useState(empty)
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value })
 
   function niceError(msg: string) {
     if (/invalid login credentials/i.test(msg)) return t('invalidLogin')
-    if (/already registered|already exists/i.test(msg)) return t('alreadyRegistered')
+    if (/already registered|already exists|duplicate key/i.test(msg)) return t('alreadyRegistered')
     return msg
+  }
+
+  /** username / e-mail / phone → the account's e-mail */
+  async function resolveEmail(identifier: string) {
+    if (isEmail(identifier)) return identifier.trim().toLowerCase()
+    const { data, error } = await supabase.rpc('login_email', { p_identifier: identifier.trim() })
+    if (error) throw error
+    return (data as string | null) ?? null
   }
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
     try {
-      const email = toAuthEmail(f.id)
       if (mode === 'in') {
+        const email = await resolveEmail(f.id)
+        if (!email) throw new Error('Invalid login credentials')
         const { error } = await supabase.auth.signInWithPassword({ email, password: f.password })
         if (error) throw error
       } else {
-        const phone = isEmail(f.id) ? null : normalizePhone(f.id)
+        const username = f.username.trim().toLowerCase()
+        const { data: free } = await supabase.rpc('username_available', { p_username: username })
+        if (!free) { toast(t('usernameTaken'), 'error'); return }
+        const email = f.email.trim().toLowerCase()
         const { data, error } = await supabase.auth.signUp({
           email, password: f.password,
-          options: { data: { full_name: f.full_name.trim(), phone, shop_name: f.shop_name.trim() || null } }
+          options: { data: { full_name: f.full_name.trim(), username, phone: normalizePhone(f.phone), city: f.city, address: f.address.trim() } }
         })
         if (error) throw error
-        // no e-mail verification: sign straight in
         if (!data.session) {
           const r = await supabase.auth.signInWithPassword({ email, password: f.password })
           if (r.error) throw r.error
@@ -50,13 +66,20 @@ export default function Login() {
   }
 
   async function forgot() {
-    if (!isEmail(f.id)) { toast(t('forgotPhone'), 'error'); return }
-    const { error } = await supabase.auth.resetPasswordForEmail(f.id.trim())
-    toast(error ? error.message : t('resetSent'), error ? 'error' : 'success')
+    if (!f.id.trim()) { toast(t('enterLoginFirst'), 'error'); return }
+    setBusy(true)
+    try {
+      const email = await resolveEmail(f.id)
+      if (!email || email.endsWith('@phone.sanadorder.app')) { toast(t('forgotPhone'), 'error'); return }
+      const redirectTo = isNativeApp ? SITE_URL : window.location.origin + window.location.pathname
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+      toast(error ? error.message : t('resetSent'), error ? 'error' : 'success')
+    } finally { setBusy(false) }
   }
 
   const nextLang = LANGS[(LANGS.findIndex(l => l.code === lang) + 1) % LANGS.length]
   const iconCls = 'pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-2'
+  const ltrField = 'field px-12 text-start rtl:text-right'
 
   return (
     <div className="relative min-h-dvh overflow-hidden">
@@ -86,37 +109,72 @@ export default function Login() {
             ))}
           </div>
           <form onSubmit={submit} className="space-y-3">
-            {mode === 'up' && (
+            {mode === 'in' ? (
               <div className="relative">
                 <UserRound className={iconCls} />
-                <input required className="field ps-12" placeholder={t('fullName')} aria-label={t('fullName')} value={f.full_name} onChange={set('full_name')} autoComplete="name" />
+                <input required dir="ltr" className={ltrField} placeholder={t('loginId')} aria-label={t('loginId')}
+                  value={f.id} onChange={set('id')} autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
               </div>
+            ) : (
+              <>
+                <div className="relative">
+                  <UserRound className={iconCls} />
+                  <input required className="field ps-12" placeholder={t('fullName')} aria-label={t('fullName')} value={f.full_name} onChange={set('full_name')} autoComplete="name" />
+                </div>
+                <div>
+                  <div className="relative">
+                    <AtSign className={iconCls} />
+                    <input required dir="ltr" className={ltrField} placeholder={t('username')} aria-label={t('username')} pattern="[A-Za-z0-9._]{3,30}"
+                      value={f.username} onChange={e => setF({ ...f, username: e.target.value.replace(/[^A-Za-z0-9._]/g, '').toLowerCase() })}
+                      autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={30} />
+                  </div>
+                  <p className="mt-1 px-1 text-[11px] text-2">{t('usernameHint')}</p>
+                </div>
+                <div>
+                  <div className="relative">
+                    <Mail className={iconCls} />
+                    <input required type="email" dir="ltr" className={ltrField} placeholder={t('email')} aria-label={t('emailRecovery')}
+                      value={f.email} onChange={set('email')} autoComplete="email" autoCapitalize="none" />
+                  </div>
+                  <p className="mt-1 px-1 text-[11px] text-2">{t('emailHint')}</p>
+                </div>
+                <div>
+                  <div className="relative">
+                    <Phone className={iconCls} />
+                    <input required type="tel" dir="ltr" className={ltrField} placeholder={t('phone')} aria-label={t('phone')}
+                      value={f.phone} onChange={set('phone')} autoComplete="tel" inputMode="tel" />
+                  </div>
+                  <p className="mt-1 px-1 text-[11px] text-2">{t('phoneHint')}</p>
+                </div>
+              </>
             )}
             <div className="relative">
-              <Phone className={iconCls} />
-              <input required dir="ltr" className="field px-12 text-start rtl:text-right" inputMode={mode === 'up' ? 'tel' : 'email'}
-                placeholder={mode === 'up' ? `${t('phone')} — ${t('phoneHint')}` : t('phoneOrEmail')} aria-label={t('phoneOrEmail')}
-                value={f.id} onChange={set('id')} autoComplete={mode === 'up' ? 'tel' : 'username'} autoCapitalize="none" />
-            </div>
-            <div className="relative">
               <Lock className={iconCls} />
-              <input required minLength={6} type={show ? 'text' : 'password'} dir="ltr" className="field px-12 text-start rtl:text-right"
-                placeholder={mode === 'up' ? `${t('password')} — ${t('passwordHint')}` : t('password')} aria-label={t('password')}
+              <input required minLength={6} type={show ? 'text' : 'password'} dir="ltr" className={ltrField}
+                placeholder={t('password')} aria-label={t('password')}
                 value={f.password} onChange={set('password')} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} />
               <button type="button" aria-label="show password" onClick={() => setShow(!show)} className="absolute inset-y-0 end-0 grid w-12 place-items-center text-2">
                 {show ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
               </button>
             </div>
+            {mode === 'up' && <p className="-mt-2 px-1 text-[11px] text-2">{t('passwordHint')}</p>}
             {mode === 'up' && (
-              <div className="relative">
-                <Store className={iconCls} />
-                <input className="field ps-12" placeholder={t('shopOptional')} aria-label={t('shopOptional')} value={f.shop_name} onChange={set('shop_name')} />
-              </div>
+              <>
+                <p className="label !mb-0 pt-1">{t('address')}</p>
+                <CitySelect required withIcon value={f.city} onChange={city => setF({ ...f, city })} />
+                {f.city && (
+                  <div className="relative">
+                    <Home className="pointer-events-none absolute start-4 top-4 size-5 text-2" />
+                    <textarea required rows={2} className="field resize-none ps-12" placeholder={t('fullAddress')} aria-label={t('fullAddress')}
+                      value={f.address} onChange={set('address')} autoComplete="street-address" />
+                  </div>
+                )}
+              </>
             )}
             <button disabled={busy} className="btn btn-primary mt-1 min-h-14 w-full text-base">
               {busy && <Spinner />} {mode === 'in' ? t('signIn') : t('signUp')}
             </button>
-            {mode === 'in' && <button type="button" onClick={forgot} className="min-h-11 w-full text-center text-sm font-semibold text-2">{t('forgot')}</button>}
+            {mode === 'in' && <button type="button" disabled={busy} onClick={forgot} className="min-h-11 w-full text-center text-sm font-semibold text-2">{t('forgot')}</button>}
           </form>
         </div>
         <p className="mt-auto pt-6 text-center text-xs text-2">
