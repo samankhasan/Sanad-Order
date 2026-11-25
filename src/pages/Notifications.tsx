@@ -5,7 +5,7 @@ import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationsContext'
 import { useToast } from '../context/ToastContext'
-import { EmptyState, PageHeader, Sheet, Skeleton, Spinner } from '../components/ui'
+import { EmptyState, PageHeader, Sheet, Skeleton, Spinner, Thumb } from '../components/ui'
 import { enablePush, lastPushError, pushState, pushStateAsync, type PushState } from '../lib/push'
 import { cn, dateTime } from '../lib/format'
 import type { AppNotification } from '../lib/types'
@@ -94,7 +94,7 @@ export default function Notifications() {
                   <li key={n.id}>
                     <button onClick={() => tap(n)} className={cn('flex w-full items-start gap-3 px-4 py-3.5 text-start transition active:bg-[var(--surface-2)]', isNew && 'bg-[color-mix(in_srgb,var(--color-brand)_6%,transparent)]')}>
                       {n.image_url ? (
-                        <img src={n.image_url} alt="" loading="lazy" className="size-14 shrink-0 rounded-2xl border border-theme bg-white object-cover" />
+                        <Thumb src={n.image_url} className="size-14 shrink-0 rounded-2xl border border-theme bg-white object-cover" />
                       ) : (
                         <span className={cn('grid size-14 shrink-0 place-items-center rounded-2xl', personal ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300')}>
                           {personal ? <PackageCheck className="size-6" /> : <Megaphone className="size-6" />}

@@ -3,8 +3,8 @@ import { Bell, Camera, Send, Smartphone, X } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
 import { useToast } from '../../context/ToastContext'
 import { useCategories } from '../../lib/data'
-import { supabase, IMAGE_BUCKET } from '../../lib/supabase'
-import { compressImage } from '../../lib/image'
+import { supabase } from '../../lib/supabase'
+import { PRESETS, uploadOptimized } from '../../lib/image'
 import { Spinner } from '../../components/ui'
 import { assetUrl, dateTime } from '../../lib/format'
 import type { AppNotification } from '../../lib/types'
@@ -32,11 +32,8 @@ export default function AdminNotify() {
   async function upload(file: File) {
     setBusy('upload')
     try {
-      const blob = await compressImage(file, 1200)
-      const path = `notifications/${crypto.randomUUID()}.webp`
-      const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, blob, { contentType: 'image/webp' })
-      if (error) throw error
-      setF(s => ({ ...s, image_url: supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl }))
+      const url = await uploadOptimized(file, 'notifications', PRESETS.banner)
+      setF(s => ({ ...s, image_url: url }))
     } catch (e) { toast((e as Error).message, 'error') }
     setBusy(null)
   }

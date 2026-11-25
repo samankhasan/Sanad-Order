@@ -7,7 +7,7 @@ import { useToast } from '../context/ToastContext'
 import { useCategories } from '../lib/data'
 import { supabase } from '../lib/supabase'
 import { notify } from '../lib/push'
-import { EmptyState, PageHeader, QtyStepper, Spinner } from '../components/ui'
+import { EmptyState, PageHeader, QtyStepper, Spinner, Thumb } from '../components/ui'
 import { money } from '../lib/format'
 import type { Order } from '../lib/types'
 
@@ -57,7 +57,7 @@ export default function Cart() {
               {lines.map(({ product: p, quantity }) => (
                 <li key={p.id} className="flex gap-3 p-3">
                   <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white">
-                    {p.image_url ? <img src={p.image_url} alt="" className="size-full object-contain p-1" /> : <ImageOff className="size-6 text-gray-300" />}
+                    {p.image_url ? <Thumb src={p.image_url} className="size-full object-contain p-1" /> : <ImageOff className="size-6 text-gray-300" />}
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col">
                     <div className="flex items-start gap-2">
