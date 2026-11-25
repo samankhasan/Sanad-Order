@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { PackageOpen, Search, ShoppingBag, X } from 'lucide-react'
+import { ArrowDownWideNarrow, PackageOpen, Search, ShoppingBag, X } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
-import { useCategories, useProducts } from '../lib/data'
+import { useCategories, useProducts, useSubcategories } from '../lib/data'
 import { BackButton, BrandLogo, EmptyState, ErrorBox, PullToRefresh, Skeleton } from '../components/ui'
 import ProductCard from '../components/ProductCard'
 import ProductSheet from '../components/ProductSheet'
-import { money } from '../lib/format'
+import { money, subName } from '../lib/format'
 import type { Product } from '../lib/types'
 import { setStatusBarOverride } from '../lib/native'
 
@@ -22,20 +22,23 @@ export default function Category() {
   const { products, error, reload } = useProducts(cat?.id ?? '00000000-0000-0000-0000-000000000000')
   const [q, setQ] = useState('')
   const [sort, setSort] = useState<Sort>('default')
+  const [subId, setSubId] = useState<string | null>(null)
+  const { subcategories } = useSubcategories(cat?.id ?? '00000000-0000-0000-0000-000000000000')
   const [open, setOpen] = useState<Product | null>(null)
-  useEffect(() => { setOpen(null); setQ('') }, [slug])
+  useEffect(() => { setOpen(null); setQ(''); setSubId(null) }, [slug])
   useEffect(() => { setStatusBarOverride('dark'); return () => setStatusBarOverride(null) }, [])
   const refresh = useCallback(() => reload(), [reload])
 
   const list = useMemo(() => {
     if (!products) return null
     const s = q.trim().toLowerCase()
-    const l = s ? products.filter(p => [p.name, p.sku, p.size].some(v => v?.toLowerCase().includes(s))) : [...products]
+    let l = subId ? products.filter(p => p.subcategory_id === subId) : [...products]
+    if (s) l = l.filter(p => [p.name, p.sku, p.size].some(v => v?.toLowerCase().includes(s)))
     if (sort === 'price_asc') l.sort((a, b) => a.price - b.price)
     if (sort === 'price_desc') l.sort((a, b) => b.price - a.price)
     if (sort === 'name') l.sort((a, b) => a.name.localeCompare(b.name))
     return l
-  }, [products, q, sort])
+  }, [products, q, sort, subId])
 
   const sorts: Sort[] = ['default', 'price_asc', 'price_desc', 'name']
   const sortLabel: Record<Sort, string> = { default: t('all'), price_asc: `${t('price')} ↑`, price_desc: `${t('price')} ↓`, name: 'A–Z' }
@@ -66,18 +69,32 @@ export default function Category() {
             <h1 className="truncate text-xl font-extrabold">{cat ? catName(cat) : '…'}</h1>
             <span className="chip surface-2 text-2">{products?.length ?? 0}</span>
           </div>
-          <div className="relative mt-2">
+          <div className="relative mt-2 flex gap-2">
+            <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-2" />
             <input type="search" enterKeyHint="search" value={q} onChange={e => setQ(e.target.value)} placeholder={t('searchPlaceholder')} className="field ps-12 pe-12 [&::-webkit-search-cancel-button]:hidden" />
             {q && <button aria-label="clear" onClick={() => setQ('')} className="absolute end-1 top-1/2 grid size-12 -translate-y-1/2 place-items-center text-2"><X className="size-5" /></button>}
+            </div>
+            <label className="relative grid size-[52px] shrink-0 place-items-center rounded-[14px] border-[1.5px] border-theme surface-2" aria-label={t('sortBy')}>
+              <ArrowDownWideNarrow className="size-5" style={sort !== 'default' ? { color: accent } : undefined} />
+              <select value={sort} onChange={e => setSort(e.target.value as Sort)} className="absolute inset-0 cursor-pointer opacity-0" aria-label={t('sortBy')}>
+                {sorts.map(s => <option key={s} value={s}>{s === 'default' ? t('sortBy') : sortLabel[s]}</option>)}
+              </select>
+            </label>
           </div>
-          <div className="no-scrollbar -mx-[var(--gutter)] mt-3 flex gap-2 overflow-x-auto px-[var(--gutter)]">
-            {sorts.map(s => (
-              <button key={s} aria-pressed={sort === s} onClick={() => setSort(s)} className="filter-chip" style={sort === s ? { background: accent, color: '#fff' } : undefined}>
-                {sortLabel[s]}
-              </button>
-            ))}
-          </div>
+          {subcategories && subcategories.length > 0 && (
+            <div className="no-scrollbar -mx-[var(--gutter)] mt-3 flex gap-2 overflow-x-auto px-[var(--gutter)]">
+              {[null, ...subcategories].map(sc => {
+                const on = subId === (sc?.id ?? null)
+                const count = products?.filter(p => !sc || p.subcategory_id === sc.id).length ?? 0
+                return (
+                  <button key={sc?.id ?? 'all'} aria-pressed={on} onClick={() => setSubId(sc?.id ?? null)} className="filter-chip" style={on ? { background: accent, color: '#fff' } : undefined}>
+                    {sc ? subName(sc, lang) : t('all')}<span className="opacity-60">{count}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 

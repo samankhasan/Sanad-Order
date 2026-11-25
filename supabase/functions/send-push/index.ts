@@ -76,7 +76,7 @@ async function pushToTokens(admin: ReturnType<typeof createClient>, tokens: stri
             token,
             notification: { title: m.title, body: m.body, ...(m.image_url ? { image: m.image_url } : {}) },
             data,
-            android: { priority: 'HIGH', notification: { channel_id: 'sanad_default', sound: 'default', default_vibrate_timings: true } },
+            android: { priority: 'HIGH', notification: { channel_id: 'sanad_alerts', sound: 'sanad_notify', default_vibrate_timings: true, notification_priority: 'PRIORITY_HIGH' } },
             apns: { payload: { aps: { sound: 'default' } } },
             webpush: { notification: { icon: 'icons/icon-192.png', badge: 'icons/icon-192.png' } }
           }

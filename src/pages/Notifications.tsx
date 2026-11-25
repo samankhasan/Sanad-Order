@@ -5,7 +5,7 @@ import { usePrefs } from '../context/PrefsContext'
 import { useNotifications } from '../context/NotificationsContext'
 import { useToast } from '../context/ToastContext'
 import { EmptyState, PageHeader, Skeleton, Spinner } from '../components/ui'
-import { enablePush, pushState, type PushState } from '../lib/push'
+import { enablePush, lastPushError, pushState, pushStateAsync, type PushState } from '../lib/push'
 import { dateTime } from '../lib/format'
 
 export default function Notifications() {
@@ -18,6 +18,7 @@ export default function Notifications() {
   const [seenBefore] = useState(() => Date.now())
 
   useEffect(() => { if (unread > 0) markAllSeen() }, [unread, markAllSeen])
+  useEffect(() => { pushStateAsync().then(setState).catch(() => {}) }, [])
 
   async function turnOn() {
     setBusy(true)
@@ -38,6 +39,9 @@ export default function Notifications() {
             </div>
             <button disabled={busy} onClick={turnOn} className="btn btn-primary shrink-0 px-4 py-2.5 text-sm">{busy ? <Spinner className="size-4" /> : 'OK'}</button>
           </div>
+        )}
+        {state === 'granted' && lastPushError && (
+          <p className="rounded-2xl bg-rose-50 p-3 text-xs font-semibold text-rose-800 dark:bg-rose-950/40 dark:text-rose-200" dir="ltr">Push: {lastPushError}</p>
         )}
         {state === 'denied' && (
           <p className="flex items-center gap-2 rounded-2xl bg-amber-50 p-3 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"><BellOff className="size-4 shrink-0" />{t('pushDenied')}</p>

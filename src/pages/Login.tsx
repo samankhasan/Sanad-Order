@@ -94,13 +94,13 @@ export default function Login() {
             )}
             <div className="relative">
               <Phone className={iconCls} />
-              <input required dir="ltr" className="field ps-12 text-start rtl:text-right" inputMode={mode === 'up' ? 'tel' : 'email'}
+              <input required dir="ltr" className="field px-12 text-start rtl:text-right" inputMode={mode === 'up' ? 'tel' : 'email'}
                 placeholder={mode === 'up' ? `${t('phone')} — ${t('phoneHint')}` : t('phoneOrEmail')} aria-label={t('phoneOrEmail')}
                 value={f.id} onChange={set('id')} autoComplete={mode === 'up' ? 'tel' : 'username'} autoCapitalize="none" />
             </div>
             <div className="relative">
               <Lock className={iconCls} />
-              <input required minLength={6} type={show ? 'text' : 'password'} dir="ltr" className="field ps-12 pe-12 text-start rtl:text-right"
+              <input required minLength={6} type={show ? 'text' : 'password'} dir="ltr" className="field px-12 text-start rtl:text-right"
                 placeholder={mode === 'up' ? `${t('password')} — ${t('passwordHint')}` : t('password')} aria-label={t('password')}
                 value={f.password} onChange={set('password')} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} />
               <button type="button" aria-label="show password" onClick={() => setShow(!show)} className="absolute inset-y-0 end-0 grid w-12 place-items-center text-2">

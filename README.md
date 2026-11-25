@@ -2,7 +2,7 @@
 
 <p align="center"><img src="public/brands/sanad.png" height="140" alt="Sanad Company"></p>
 
-ئەپی داواکردنی بەرهەمەکانی کۆمپانیای سەنەد — **Adan · FAB · Riyadh Paints · Tools**.
+ئەپی داواکردنی بەرهەمەکانی کۆمپانیای ساناد — **Adan · FAB · Riyadh Paints · Tools**.
 یەک کۆد بۆ **وێبگەڕ (PWA)**، **ئەندرۆید** و دواتر **iOS** (Capacitor).
 
 ## تایبەتمەندییەکان

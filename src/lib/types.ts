@@ -25,9 +25,20 @@ export interface Category {
   is_active: boolean
 }
 
+export interface Subcategory {
+  id: string
+  category_id: string
+  name_ku: string
+  name_ar: string | null
+  name_en: string | null
+  sort_order: number
+  is_active: boolean
+}
+
 export interface Product {
   id: string
   category_id: string
+  subcategory_id: string | null
   name: string
   description: string | null
   sku: string | null

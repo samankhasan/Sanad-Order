@@ -24,3 +24,7 @@ export function assetUrl(path: string | null | undefined) {
 export function cn(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(' ')
 }
+
+export function subName(s: { name_ku: string; name_ar: string | null; name_en: string | null }, lang: string) {
+  return (lang === 'ar' ? s.name_ar : lang === 'en' ? s.name_en : s.name_ku) || s.name_ku
+}

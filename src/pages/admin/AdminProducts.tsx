@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { EyeOff, ImageOff, PackageOpen, Plus, Search } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
-import { useCategories, useProducts } from '../../lib/data'
+import { useCategories, useProducts, useSubcategories } from '../../lib/data'
+import { subName } from './AdminCategories'
 import { EmptyState, ErrorBox, Skeleton } from '../../components/ui'
 import ProductForm from './ProductForm'
 import { cn, money } from '../../lib/format'
@@ -12,6 +13,8 @@ export default function AdminProducts() {
   const { categories } = useCategories()
   const [cat, setCat] = useState<string | null>(null)
   const { products, error, reload } = useProducts(null, { includeHidden: true })
+  const { subcategories } = useSubcategories(null, { includeHidden: true })
+  const subOf = (id: string | null) => subcategories?.find(s => s.id === id)
   const [q, setQ] = useState('')
   const [editing, setEditing] = useState<Product | 'new' | null>(null)
 
@@ -54,7 +57,7 @@ export default function AdminProducts() {
                   <p className="truncate text-sm font-bold">{p.name}</p>
                   <p className="flex items-center gap-1.5 truncate text-xs text-2">
                     {c && <span className="size-2 rounded-full" style={{ background: c.accent }} />}
-                    {c && catName(c)}{p.size && ` · ${p.size}`}
+                    {c && catName(c)}{subOf(p.subcategory_id) && ` · ${subName(subOf(p.subcategory_id)!, lang)}`}{p.size && ` · ${p.size}`}
                     {!p.is_active && <EyeOff className="size-3.5" />}
                   </p>
                 </div>
