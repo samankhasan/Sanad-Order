@@ -53,6 +53,7 @@ jobs:
           sed -i 's#<item name="android:background">@drawable/splash</item>#<item name="android:windowBackground">@drawable/splash</item>#' android/app/src/main/res/values/styles.xml
           grep -n "splash" android/app/src/main/res/values/styles.xml
           mkdir -p android/app/src/main/res/raw && cp native/android/res/raw/* android/app/src/main/res/raw/
+          python3 native/android/patch-manifest.py android/app/src/main/AndroidManifest.xml
       - run: npx cap sync android
       - name: Gradle build
         working-directory: android

@@ -41,8 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (hash.get('type') === 'recovery') setRecovery(true)
         clean()
       } else if (query.get('code')) {
-        const { error } = await supabase.auth.exchangeCodeForSession(query.get('code')!)
-        if (!error) setRecovery(true)
+        await supabase.auth.exchangeCodeForSession(query.get('code')!) // recovery is flagged by the PASSWORD_RECOVERY event
         clean()
       } else if (hash.get('error_description')) {
         clean()

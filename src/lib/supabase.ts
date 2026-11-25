@@ -41,6 +41,7 @@ export const supabase = createClient(url, key, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
+    flowType: 'implicit',
     storage: Capacitor.isNativePlatform() ? nativeStorage : undefined
   }
 })

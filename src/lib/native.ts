@@ -20,6 +20,14 @@ export async function initNative() {
     applyInsets(insets)
     SafeArea.addListener('safeAreaChanged', d => applyInsets(d.insets))
   } catch (e) { console.warn('safe-area', e) }
+  // Google sign-in returns to the app through a deep link
+  try {
+    const { App } = await import('@capacitor/app')
+    const { handleAuthDeepLink } = await import('./oauth')
+    App.addListener('appUrlOpen', ({ url }) => { handleAuthDeepLink(url).catch(e => console.warn('oauth', e)) })
+    const launch = await App.getLaunchUrl()
+    if (launch?.url) await handleAuthDeepLink(launch.url)
+  } catch (e) { console.warn('deep link', e) }
   try {
     const { SplashScreen } = await import('@capacitor/splash-screen')
     setTimeout(() => SplashScreen.hide({ fadeOutDuration: 250 }), 150)
