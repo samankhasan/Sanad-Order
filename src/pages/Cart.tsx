@@ -25,7 +25,7 @@ export default function Cart() {
     const items = cart.lines.map(l => ({ product_id: l.product.id, quantity: l.quantity }))
     const { data, error } = await supabase.rpc('place_order', { p_items: items, p_note: note })
     setBusy(false)
-    if (error) { toast(error.message, 'error'); return }
+    if (error) { toast(/account_blocked/.test(error.message) ? t('accountBlocked') : error.message, 'error'); return }
     cart.clear()
     notify({ action: 'new_order', order_id: (data as Order).id })
     toast(t('orderPlaced'))

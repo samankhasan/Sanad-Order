@@ -2,7 +2,7 @@
 import { Capacitor } from '@capacitor/core'
 import { supabase } from './supabase'
 
-function deviceId() {
+export function deviceId() {
   try {
     let id = localStorage.getItem('so.device')
     if (!id) { id = crypto.randomUUID().replace(/-/g, ''); localStorage.setItem('so.device', id) }

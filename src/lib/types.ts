@@ -12,6 +12,7 @@ export interface Profile {
   role: Role
   lang?: 'ku' | 'ar' | 'en'
   notifications_seen_at?: string
+  blocked_at?: string | null
   created_at: string
 }
 

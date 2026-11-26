@@ -40,7 +40,7 @@ export default function Login() {
   useEffect(() => {
     try {
       const err = sessionStorage.getItem('so.authError')
-      if (err) { sessionStorage.removeItem('so.authError'); toast(/provider is not enabled/i.test(err) ? t('googleNotReady') : err, 'error') }
+      if (err) { sessionStorage.removeItem('so.authError'); toast(/provider is not enabled/i.test(err) ? t('googleNotReady') : /banned|account_blocked|database error saving new user/i.test(err) ? t('accountBlocked') : err, 'error') }
     } catch { /* ignore */ }
   }, [toast, t])
 
@@ -56,6 +56,7 @@ export default function Login() {
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value })
 
   function niceError(msg: string) {
+    if (/banned|account_blocked|database error saving new user/i.test(msg)) return t('accountBlocked')
     if (/invalid login credentials/i.test(msg)) return t('invalidLogin')
     if (/already registered|already exists|duplicate key/i.test(msg)) return t('alreadyRegistered')
     return msg
