@@ -1,10 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { usePrefs } from '../../context/PrefsContext'
 import { cn } from '../../lib/format'
+import { useAuth } from '../../context/AuthContext'
 
 export default function AdminLayout() {
   const { t } = usePrefs()
-  const tabs = [
+  const { isAdmin } = useAuth()
+  const all = [
     { to: '/admin', label: t('dashboard'), end: true },
     { to: '/admin/orders', label: t('manageOrders') },
     { to: '/admin/products', label: t('manageProducts') },
@@ -13,11 +15,13 @@ export default function AdminLayout() {
     { to: '/admin/banners', label: t('ads') },
     { to: '/admin/notify', label: t('notifications') }
   ]
+  // operators only add products and members
+  const tabs = isAdmin ? all : all.filter(x => x.to === '/admin/products' || x.to === '/admin/customers')
   return (
     <div>
       <div className="app-bar !border-theme border-b" data-scrolled="true"><div className="page px-g pb-3">
         <div className="flex min-h-[56px] items-center gap-2">
-          <h1 className="text-xl font-extrabold">{t('admin')}</h1>
+          <h1 className="text-xl font-extrabold">{isAdmin ? t('admin') : t('role_operator')}</h1>
           <span className="h-1.5 w-10 rounded-full sanad-stripe" />
         </div>
         <nav className="no-scrollbar -mx-[var(--gutter)] flex gap-2 overflow-x-auto px-[var(--gutter)]">

@@ -6,7 +6,8 @@ import { supabase, IMAGE_BUCKET } from './supabase'
 export interface Preset { max: number; targetKB: number; thumb: number; thumbKB: number }
 export const PRESETS = {
   product: { max: 1000, targetKB: 90, thumb: 360, thumbKB: 22 } as Preset,
-  banner: { max: 1280, targetKB: 140, thumb: 360, thumbKB: 25 } as Preset
+  banner: { max: 1280, targetKB: 140, thumb: 360, thumbKB: 25 } as Preset,
+  avatar: { max: 400, targetKB: 35, thumb: 128, thumbKB: 8 } as Preset
 }
 
 async function loadBitmap(src: Blob): Promise<ImageBitmap> {
@@ -83,4 +84,27 @@ export async function reoptimizeStored(url: string, preset: Preset = PRESETS.pro
     return original.size - full.size
   }
   return 0
+}
+
+/** A member's own profile picture: `avatars/<uid>/<id>.webp` (square crop, ~35 KB). */
+export async function uploadAvatar(file: Blob, uid: string) {
+  const bmp = await loadBitmap(file)
+  const side = Math.min(bmp.width, bmp.height)
+  const out = Math.min(side, 800)
+  const c = document.createElement('canvas')
+  c.width = c.height = out
+  c.getContext('2d')!.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, out, out)
+  bmp.close?.()
+  const square = await new Promise<Blob>((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('encode')), 'image/png'))
+  const { full } = await compressImage(square, PRESETS.avatar)
+  const path = `${uid}/${crypto.randomUUID()}.webp`
+  const { error } = await supabase.storage.from('avatars').upload(path, full, { contentType: 'image/webp', cacheControl: '31536000', upsert: false })
+  if (error) throw error
+  return { url: supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl, path }
+}
+
+/** Delete an earlier avatar file of this member (best effort). */
+export async function removeAvatarFile(url: string | null | undefined) {
+  const m = url?.split('/object/public/avatars/')[1]
+  if (m) await supabase.storage.from('avatars').remove([decodeURIComponent(m.split('?')[0])]).then(() => {}, () => {})
 }

@@ -1,4 +1,4 @@
-import { ImageOff, Plus } from 'lucide-react'
+import { Flame, ImageOff, Plus } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
 import { money, cn } from '../lib/format'
@@ -6,7 +6,7 @@ import { Thumb } from './ui'
 import type { Product } from '../lib/types'
 import { haptic } from '../lib/native'
 
-export default function ProductCard({ product, accent, onOpen, index = 0 }: { product: Product; accent?: string; onOpen: () => void; index?: number }) {
+export default function ProductCard({ product, accent, onOpen, index = 0, rank }: { product: Product; accent?: string; onOpen: () => void; index?: number; /** best-seller position */ rank?: number }) {
   const { t, lang } = usePrefs()
   const cart = useCart()
   const qty = cart.qtyOf(product.id)
@@ -17,6 +17,7 @@ export default function ProductCard({ product, accent, onOpen, index = 0 }: { pr
           ? <Thumb src={product.image_url} alt={product.name} className="size-full object-contain p-3 transition duration-500 group-hover:scale-105" />
           : <div className="grid size-full place-items-center text-gray-300"><ImageOff className="size-10" /></div>}
         {!product.in_stock && <span className="chip absolute top-2 start-2 bg-ink/85 text-white">{t('outOfStock')}</span>}
+        {rank != null && product.in_stock && <span className="absolute top-2 start-2 flex items-center gap-0.5 rounded-full bg-s-red px-2 py-0.5 text-[11px] font-black text-white shadow" dir="ltr"><Flame className="size-3" />#{rank}</span>}
         {qty > 0 && <span key={qty} className="bump absolute top-2 end-2 grid min-w-7 place-items-center rounded-full px-2 py-1 text-xs font-black text-white" style={{ background: accent || '#0b1220' }}>{qty}</span>}
       </button>
       <div className="flex flex-1 flex-col gap-1 p-3">

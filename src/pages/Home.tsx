@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase'
 import { BrandLogo, EmptyState, ErrorBox, PullToRefresh, Skeleton, StatusBadge } from '../components/ui'
 import ProductCard from '../components/ProductCard'
 import ProductSheet from '../components/ProductSheet'
+import UpdateBanner from '../components/UpdateBanner'
 import { assetUrl, cn, money } from '../lib/format'
 import type { HomeBanner, Order, Product } from '../lib/types'
 import { setStatusBarOverride } from '../lib/native'
@@ -25,7 +26,7 @@ function SectionTitle({ title, to, icon }: { title: string; to?: string; icon?: 
   )
 }
 
-type StripTab = { key: string; label: string; icon: React.ReactNode; items: Product[] }
+type StripTab = { key: string; label: string; icon: React.ReactNode; items: Product[]; ranked?: boolean; empty?: string }
 
 /** One horizontal row of products; the title row switches between lists (newest / most popular). */
 function ProductStrip({ tabs, accentOf, onOpen }: { tabs: StripTab[]; accentOf: (id: string) => string | undefined; onOpen: (p: Product) => void }) {
@@ -43,10 +44,11 @@ function ProductStrip({ tabs, accentOf, onOpen }: { tabs: StripTab[]; accentOf: 
           </button>
         ))}
       </div>
+      {tab.items.length === 0 && tab.empty && <p className="card p-6 text-center text-sm font-semibold text-2">{tab.empty}</p>}
       <div key={tab.key} className="no-scrollbar -mx-[var(--gutter)] flex snap-x gap-3 overflow-x-auto px-[var(--gutter)] pb-1">
         {tab.items.map((p, i) => (
           <div key={p.id} className="w-[44%] max-w-[200px] shrink-0 snap-start xs:w-[40%] sm:w-48">
-            <ProductCard index={i} product={p} accent={accentOf(p.category_id)} onOpen={() => onOpen(p)} />
+            <ProductCard index={i} product={p} accent={accentOf(p.category_id)} onOpen={() => onOpen(p)} rank={tab.ranked ? i + 1 : undefined} />
           </div>
         ))}
       </div>
@@ -197,6 +199,9 @@ export default function Home() {
           </section>
         ) : (
           <>
+            {/* ===== New app version (Android) ===== */}
+            <UpdateBanner />
+
             {/* ===== Quick actions ===== */}
             <section className="grid grid-cols-3 gap-2 xs:gap-3">
               {[
@@ -240,8 +245,8 @@ export default function Home() {
             {/* ===== Newest / most popular (one row) ===== */}
             <ProductStrip accentOf={accentOf} onOpen={setOpen} tabs={[
               { key: 'new', label: t('newArrivals'), icon: <Sparkles className="size-4" />, items: newest },
-              { key: 'popular', label: t('popularTab'), icon: <Flame className="size-4" />, items: popular ?? [] }
-            ].filter(x => x.items.length > 0)} />
+              { key: 'popular', label: t('popularTab'), icon: <Flame className="size-4" />, items: popular ?? [], ranked: true, empty: t('noSalesYet') }
+            ].filter(x => x.items.length > 0 || x.empty)} />
 
             {/* ===== Recent orders ===== */}
             {recent && recent.length > 0 && (

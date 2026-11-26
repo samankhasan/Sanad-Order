@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Download, LogOut, Moon, Sun, MonitorSmartphone, ShieldCheck, Smartphone, Trash2, FileText } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { BadgeCheck, Camera, Download, LogOut, Moon, Sun, MonitorSmartphone, ShieldCheck, Smartphone, Trash2, FileText } from 'lucide-react'
+import { removeAvatarFile, uploadAvatar } from '../lib/image'
 import { displayIdentity, normalizePhone } from '../lib/identity'
 import { ANDROID_APK_URL, isNativeApp } from '../lib/native'
 import CitySelect from '../components/CitySelect'
@@ -23,6 +24,22 @@ export default function Profile() {
   const [f, setF] = useState({ full_name: '', username: '', phone: '', city: '', address: '' })
   const [busy, setBusy] = useState(false)
   const [canInstall, setCanInstall] = useState(!!deferredPrompt)
+  const photoRef = useRef<HTMLInputElement>(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
+
+  async function setPhoto(file: File | null) {
+    if (!session) return
+    setPhotoBusy(true)
+    try {
+      const old = profile?.avatar_url
+      const url = file ? (await uploadAvatar(file, session.user.id)).url : null
+      const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', session.user.id)
+      if (error) throw error
+      await removeAvatarFile(old)
+      await refreshProfile(); toast(t('saved'))
+    } catch (e) { toast((e as Error).message, 'error') }
+    setPhotoBusy(false)
+  }
 
   useEffect(() => {
     if (profile) setF({ full_name: profile.full_name ?? '', username: profile.username ?? '', phone: profile.phone ?? '', city: profile.city ?? '', address: profile.address ?? '' })
@@ -66,11 +83,20 @@ export default function Profile() {
       <PageHeader title={t('profile')} />
       <div className="page-narrow px-g space-y-4">
         <section className="card flex items-center gap-4 p-5">
-          <div className="grid size-16 place-items-center rounded-3xl bg-ink text-2xl font-black text-white dark:bg-white dark:text-ink">{initials}</div>
+          <div className="relative shrink-0">
+            <button onClick={() => photoRef.current?.click()} disabled={photoBusy} aria-label={t('changePhoto')}
+              className="grid size-20 place-items-center overflow-hidden rounded-3xl bg-ink text-2xl font-black text-white dark:bg-white dark:text-ink">
+              {photoBusy ? <Spinner /> : profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="size-full object-cover" /> : initials}
+            </button>
+            <span className="pointer-events-none absolute -bottom-1 -end-1 grid size-8 place-items-center rounded-full bg-[var(--primary)] text-[var(--on-primary)] ring-4 ring-[var(--surface)]"><Camera className="size-4" /></span>
+            <input ref={photoRef} type="file" accept="image/*" hidden onChange={e => { const x = e.target.files?.[0]; if (x) setPhoto(x); e.target.value = '' }} />
+          </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-extrabold">{profile?.full_name || '—'}</p>
             <p className="truncate text-sm text-2" dir="ltr">{profile?.username ? `@${profile.username}` : displayIdentity(session?.user.email, profile?.phone)}</p>
-            {isAdmin && <span className="chip mt-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"><ShieldCheck className="size-3.5" />Admin</span>}
+            {isAdmin && <span className="chip mt-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"><ShieldCheck className="size-3.5" />{t('role_admin')}</span>}
+            {profile?.role === 'operator' && <span className="chip mt-1 bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300"><BadgeCheck className="size-3.5" />{t('role_operator')}</span>}
+            {profile?.avatar_url && <button onClick={() => setPhoto(null)} disabled={photoBusy} className="mt-1 block min-h-9 text-xs font-bold text-rose-600">{t('removePhoto')}</button>}
           </div>
         </section>
 

@@ -12,7 +12,7 @@ const ROOTS = ['/', '/cart', '/orders', '/profile', '/admin']
 export default function AppShell() {
   const { t } = usePrefs()
   const { count } = useCart()
-  const { isAdmin } = useAuth()
+  const { isStaff } = useAuth()
   const { pathname } = useLocation()
   const nav = useNavigate()
   const [online, setOnline] = useState(navigator.onLine)
@@ -42,7 +42,7 @@ export default function AppShell() {
     { to: '/', icon: Home, label: t('home'), end: true },
     { to: '/cart', icon: ShoppingBag, label: t('cart'), badge: count },
     { to: '/orders', icon: ReceiptText, label: t('orders') },
-    ...(isAdmin ? [{ to: '/admin', icon: LayoutDashboard, label: t('admin') }] : []),
+    ...(isStaff ? [{ to: '/admin', icon: LayoutDashboard, label: t('admin') }] : []),
     { to: '/profile', icon: UserRound, label: t('profile') }
   ]
 
