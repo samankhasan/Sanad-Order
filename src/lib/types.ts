@@ -95,3 +95,11 @@ export interface AppNotification {
   push_failed: number
   created_at: string
 }
+
+export interface HomeBanner {
+  slot: number
+  image_url: string | null
+  link: string | null
+  is_active: boolean
+  updated_at: string
+}

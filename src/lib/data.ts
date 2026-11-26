@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import type { Category, Product, Subcategory } from './types'
+import type { Category, HomeBanner, Product, Subcategory } from './types'
 
 let categoriesCache: Category[] | null = null
 
@@ -56,4 +56,17 @@ export function usePopularProducts(limit = 10) {
   }, [limit])
   useEffect(() => { load() }, [load])
   return { popular: data, reload: load }
+}
+
+/** Home-page ad banners (2 slots). Admins also get hidden / empty slots. */
+export function useBanners(all = false) {
+  const [data, setData] = useState<HomeBanner[] | null>(null)
+  const load = useCallback(async () => {
+    let q = supabase.from('home_banners').select('*').order('slot')
+    if (!all) q = q.eq('is_active', true).not('image_url', 'is', null)
+    const { data } = await q
+    setData((data as HomeBanner[]) ?? [])
+  }, [all])
+  useEffect(() => { load() }, [load])
+  return { banners: data, reload: load }
 }
