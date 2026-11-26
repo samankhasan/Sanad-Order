@@ -34,10 +34,24 @@ export async function handleAuthDeepLink(url: string) {
     const { Browser } = await import('@capacitor/browser')
     await Browser.close().catch(() => {})
   } catch { /* ignore */ }
+  if (p.get('error_description')) {
+    try { sessionStorage.setItem('so.authError', p.get('error_description')!) } catch { /* ignore */ }
+    window.location.reload()
+    return true
+  }
   if (p.get('access_token') && p.get('refresh_token')) {
     await supabase.auth.setSession({ access_token: p.get('access_token')!, refresh_token: p.get('refresh_token')! })
   } else if (p.get('code')) {
     await supabase.auth.exchangeCodeForSession(p.get('code')!)
   }
   return true
+}
+
+/** Is the Google provider switched on in Supabase? (public auth settings; cached) */
+let googleState: Promise<boolean> | null = null
+export function googleEnabled() {
+  googleState ??= fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/settings`, {
+    headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string }
+  }).then(r => r.json()).then(j => !!j?.external?.google).catch(() => false)
+  return googleState
 }

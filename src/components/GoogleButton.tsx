@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePrefs } from '../context/PrefsContext'
 import { useToast } from '../context/ToastContext'
-import { signInWithGoogle } from '../lib/oauth'
+import { googleEnabled, signInWithGoogle } from '../lib/oauth'
 import { Spinner } from './ui'
 
 /** Official multi-colour "G" mark (Google brand guidelines: white button, dark text). */
@@ -20,6 +20,9 @@ export default function GoogleButton() {
   const { t } = usePrefs()
   const toast = useToast()
   const [busy, setBusy] = useState(false)
+  // only offer Google once it is switched on in Supabase (no error page for customers)
+  const [enabled, setEnabled] = useState(false)
+  useEffect(() => { googleEnabled().then(setEnabled) }, [])
   async function go() {
     setBusy(true)
     try { await signInWithGoogle() } catch (e) {
@@ -27,11 +30,17 @@ export default function GoogleButton() {
       toast(/provider is not enabled|unsupported provider|validation_failed/i.test(msg) ? t('googleNotReady') : msg, 'error')
     } finally { setTimeout(() => setBusy(false), 1500) }
   }
+  if (!enabled) return null
   return (
+    <>
     <button type="button" onClick={go} disabled={busy}
       className="btn min-h-14 w-full border-[1.5px] border-[#dadce0] bg-white text-[15px] font-semibold text-[#1f1f1f] shadow-sm hover:bg-[#f8f9fa] dark:border-transparent">
       {busy ? <Spinner className="text-gray-500" /> : <GoogleG />}
       <span>{t('continueWithGoogle')}</span>
     </button>
+    <div className="my-4 flex items-center gap-3 text-xs font-bold text-2">
+      <span className="h-px flex-1 bg-[var(--border)]" />{t('orDivider')}<span className="h-px flex-1 bg-[var(--border)]" />
+    </div>
+    </>
   )
 }
