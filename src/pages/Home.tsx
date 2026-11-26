@@ -86,10 +86,10 @@ function Banners({ items }: { items: HomeBanner[] }) {
   }
   return (
     <section>
-      <div ref={ref} onScroll={onScroll} className="no-scrollbar -mx-[var(--gutter)] flex snap-x snap-mandatory gap-3 overflow-x-auto px-[var(--gutter)]">
+      <div ref={ref} onScroll={onScroll} className="no-scrollbar -mx-[var(--gutter)] flex snap-x snap-mandatory gap-3 overflow-x-auto px-[var(--gutter)] sm:justify-center">
         {items.map(b => (
           <button key={b.slot} onClick={() => open(b.link)} disabled={!b.link}
-            className={cn('rise relative aspect-[2/1] shrink-0 snap-center overflow-hidden rounded-[24px] bg-[var(--surface-2)] shadow-sm transition active:scale-[.98] disabled:active:scale-100', many ? 'w-[88%] sm:w-[calc(50%-6px)]' : 'w-full')}>
+            className={cn('rise relative aspect-[2/1] shrink-0 snap-center overflow-hidden rounded-[24px] bg-[var(--surface-2)] shadow-sm transition active:scale-[.98] disabled:active:scale-100', many ? 'w-[88%] sm:w-[calc(50%-6px)] sm:max-w-[520px]' : 'w-full sm:max-w-[620px]')}>
             <img src={b.image_url!} alt="" className="size-full object-cover" loading="lazy" />
           </button>
         ))}
