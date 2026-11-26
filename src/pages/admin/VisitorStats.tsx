@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Eye, UserRound, Users } from 'lucide-react'
+import { Eye, Globe2, UserRound, Users } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
 import { supabase } from '../../lib/supabase'
 import { Skeleton } from '../../components/ui'
@@ -10,7 +10,15 @@ interface Stats {
   day: Counts; week: Counts; month: Counts; year: Counts
   series: { day: string; users: number; guests: number }[]
 }
-interface Counts { users: number; guests: number; visits: number }
+interface Counts { users: number; guests: number; visits: number; countries?: { code: string; devices: number; visits: number }[] }
+
+function countryName(code: string, lang: string, unknown: string) {
+  if (!/^[A-Z]{2}$/.test(code)) return unknown
+  for (const l of [lang === 'ku' ? 'ckb' : lang, 'ar', 'en']) {
+    try { const n = new Intl.DisplayNames([l], { type: 'region' }).of(code); if (n && n !== code) return n } catch { /* next */ }
+  }
+  return code
+}
 
 const USERS = '#0284d6'
 const GUESTS = '#f36f21'
@@ -83,6 +91,34 @@ export default function VisitorStats() {
         <div className="mt-1 flex justify-between text-[10px] font-semibold text-2" dir="ltr">
           <span>{fmtDay(series[0].day)}</span><span>{fmtDay(series[series.length - 1].day)}</span>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-extrabold"><Globe2 className="size-4" />{t('countries')}<span className="text-xs font-semibold text-2">· {t(`period_${period}` as const)}</span></h3>
+        {!c.countries?.length ? <p className="rounded-2xl surface-2 p-3 text-center text-xs font-semibold text-2">—</p> : (
+          <ul className="space-y-2.5">
+            {c.countries.map(x => {
+              const top = c.countries![0].devices || 1
+              const known = /^[A-Z]{2}$/.test(x.code)
+              return (
+                <li key={x.code} className="flex items-center gap-3">
+                  {known
+                    ? <img src={`https://flagcdn.com/w40/${x.code.toLowerCase()}.png`} alt="" loading="lazy" className="h-4 w-6 shrink-0 rounded-[3px] object-cover shadow-sm" />
+                    : <span className="grid h-4 w-6 shrink-0 place-items-center rounded-[3px] surface-2 text-[9px] font-bold text-2">?</span>}
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-baseline justify-between gap-2 text-xs">
+                      <span className="truncate font-bold">{countryName(x.code, lang, t('unknownCountry'))}</span>
+                      <span className="shrink-0 font-semibold text-2"><b className="text-[var(--text)]">{x.devices.toLocaleString('en-US')}</b> {t('devices')} · {x.visits.toLocaleString('en-US')} {t('visits')}</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full surface-2">
+                      <div className="h-full rounded-full" style={{ width: `${Math.max(4, (x.devices / top) * 100)}%`, background: known ? USERS : 'var(--surface-3)' }} />
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
     </section>
   )
