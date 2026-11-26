@@ -105,3 +105,14 @@ export interface HomeBanner {
   is_active: boolean
   updated_at: string
 }
+
+export interface SupportMessage {
+  id: string
+  user_id: string
+  body: string
+  reply: string | null
+  replied_at: string | null
+  status: 'open' | 'closed'
+  created_at: string
+  profiles?: Pick<Profile, 'full_name' | 'phone' | 'username' | 'avatar_url'> | null
+}

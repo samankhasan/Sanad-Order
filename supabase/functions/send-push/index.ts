@@ -7,6 +7,8 @@
 //   { action: "broadcast", title, body, image_url?, link?, target_user? }   admin only
 //   { action: "order_status", order_id }                                     admin only → notifies the customer
 //   { action: "new_order", order_id }                                        order owner → notifies all admins
+//   { action: "support_message", message_id }                                message author → notifies all admins
+//   { action: "support_reply", message_id }                                  admin only → notifies the member
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4'
 
 const cors = {
@@ -16,6 +18,8 @@ const cors = {
 }
 const json = (d: unknown, status = 200) =>
   new Response(JSON.stringify(d), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
+
+const REPLY_TEXT: Record<string, string> = { ku: 'وەڵامی نامەکەت درایەوە 💬', ar: 'تم الرد على رسالتك 💬', en: 'We replied to your message 💬' }
 
 const STATUS_TEXT: Record<string, Record<string, string>> = {
   ku: { confirmed: 'داواکارییەکەت پەسەندکرا ✅', preparing: 'داواکارییەکەت ئامادە دەکرێت 📦', on_the_way: 'داواکارییەکەت لە ڕێگادایە 🚚', delivered: 'داواکارییەکەت گەیەندرا 🎉', cancelled: 'داواکارییەکەت هەڵوەشێنرایەوە', pending: 'داواکارییەکەت چاوەڕوانە' },
@@ -164,6 +168,37 @@ Deno.serve(async req => {
       await admin.from('notifications').insert(ids.map(id => ({ title, body: text, link, target_user: id, created_by: u.user.id })))
       const { data: rows } = await admin.from('push_tokens').select('token').in('user_id', ids)
       const r = await pushToTokens(admin, (rows ?? []).map(x => x.token), { title, body: text, link })
+      return json({ ok: true, ...r })
+    }
+
+    if (body.action === 'support_message') {
+      const { data: m } = await admin.from('support_messages').select('id, body, user_id, profiles(full_name)').eq('id', body.message_id).single()
+      if (!m || m.user_id !== u.user.id) return json({ error: 'forbidden' }, 403)
+      const { data: admins } = await admin.from('profiles').select('id').eq('role', 'admin')
+      const ids = (admins ?? []).map(a => a.id)
+      if (!ids.length) return json({ ok: true, sent: 0 })
+      // deno-lint-ignore no-explicit-any
+      const who = (m as any).profiles?.full_name || ''
+      const title = `💬 نامەی نوێ · ${who}`.slice(0, 120)
+      const text = String(m.body).slice(0, 200)
+      const link = '/admin/support'
+      await admin.from('notifications').insert(ids.map(id => ({ title, body: text, link, target_user: id, created_by: u.user.id })))
+      const { data: rows } = await admin.from('push_tokens').select('token').in('user_id', ids)
+      const r = await pushToTokens(admin, (rows ?? []).map(x => x.token), { title, body: text, link })
+      return json({ ok: true, ...r })
+    }
+
+    if (body.action === 'support_reply') {
+      if (!isAdmin) return json({ error: 'forbidden' }, 403)
+      const { data: m } = await admin.from('support_messages').select('id, reply, user_id').eq('id', body.message_id).single()
+      if (!m?.reply) return json({ error: 'not_found' }, 404)
+      const { data: p } = await admin.from('profiles').select('lang').eq('id', m.user_id).single()
+      const title = REPLY_TEXT[p?.lang ?? 'ku'] ?? REPLY_TEXT.ku
+      const text = String(m.reply).slice(0, 200)
+      const link = '/support'
+      const { data: n } = await admin.from('notifications').insert({ title, body: text, link, target_user: m.user_id, created_by: me!.id }).select().single()
+      const { data: rows } = await admin.from('push_tokens').select('token').eq('user_id', m.user_id)
+      const r = await pushToTokens(admin, (rows ?? []).map(x => x.token), { title, body: text, link, notification_id: n?.id })
       return json({ ok: true, ...r })
     }
 

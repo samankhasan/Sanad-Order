@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabase'
 import { notify } from '../lib/push'
 import { ErrorBox, PageHeader, Skeleton, Spinner, StatusBadge } from '../components/ui'
 import { assetUrl, cn, dateTime, money } from '../lib/format'
+import { SUPPORT_PHONES } from '../lib/contact'
 import { ORDER_FLOW, type Order, type OrderItem, type OrderStatus, type Product } from '../lib/types'
 
 export default function OrderDetail() {
@@ -174,18 +175,18 @@ export default function OrderDetail() {
 
         {order.note && <section className="card p-4"><p className="label">{t('note')}</p><p className="whitespace-pre-line text-sm">{order.note}</p></section>}
 
-        {/* printed invoice footer: contact note + faded company mark */}
-        <div className="hidden break-inside-avoid pt-6 print:block">
-          <div className="flex items-center justify-center gap-2 rounded-xl border border-[#d1d5db] px-4 py-3 text-center text-sm">
-            <b>{t('invoiceNoteTitle')}:</b>
-            <span>{t('invoiceNote')}</span>
-            <bdi className="font-bold" dir="ltr">{'\u2066+964 750 841 8593\u2069'}</bdi>
-            <span aria-hidden="true">·</span>
-            <bdi className="font-bold" dir="ltr">{'\u2066+964 751 444 6665\u2069'}</bdi>
-          </div>
-          <img src={assetUrl('brands/sanad-mark.png')} alt="" className="mx-auto mt-8 h-14 w-auto opacity-[.18] [print-color-adjust:exact] [-webkit-print-color-adjust:exact]" />
-          <p className="mt-1 text-center text-[10px] tracking-[.3em] text-[#9ca3af]">SANAD COMPANY</p>
-        </div>
+        {/* printed invoice: faint logo watermark behind the page + contact note as the page footer (repeats on every page) */}
+        <img src={assetUrl('brands/sanad-mark.png')} alt="" aria-hidden="true" className="invoice-watermark hidden print:block" />
+        <footer className="invoice-footer hidden print:flex">
+          <b>{t('invoiceNoteTitle')}:</b>
+          <span>{t('invoiceNote')}</span>
+          {SUPPORT_PHONES.map((p, i) => (
+            <span key={p.e164} className="contents">
+              {i > 0 && <span aria-hidden="true">·</span>}
+              <bdi className="font-bold" dir="ltr">{`\u2066${p.display}\u2069`}</bdi>
+            </span>
+          ))}
+        </footer>
 
         {/* admin status control */}
         {isAdmin && (

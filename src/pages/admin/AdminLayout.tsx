@@ -12,6 +12,7 @@ export default function AdminLayout() {
     { to: '/admin/products', label: t('manageProducts') },
     { to: '/admin/categories', label: t('categories') },
     { to: '/admin/customers', label: t('customers') },
+    { to: '/admin/support', label: t('messages') },
     { to: '/admin/banners', label: t('ads') },
     { to: '/admin/notify', label: t('notifications') }
   ]

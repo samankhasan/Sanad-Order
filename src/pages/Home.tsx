@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { Browser } from '@capacitor/browser'
-import { Bell, ChevronLeft, ChevronRight, Flame, MessageCircle, PackageSearch, ReceiptText, RotateCcw, Search, Sparkles, X } from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, Flame, LifeBuoy, MessageCircle, PackageSearch, ReceiptText, RotateCcw, Search, Sparkles, X } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationsContext'
@@ -30,6 +30,7 @@ type StripTab = { key: string; label: string; icon: React.ReactNode; items: Prod
 
 /** One horizontal row of products; the title row switches between lists (newest / most popular). */
 function ProductStrip({ tabs, accentOf, onOpen }: { tabs: StripTab[]; accentOf: (id: string) => string | undefined; onOpen: (p: Product) => void }) {
+  // always opens on the first tab (newest); the member can switch to the others
   const [active, setActive] = useState(tabs[0]?.key)
   const tab = tabs.find(x => x.key === active) ?? tabs[0]
   if (!tab) return null
@@ -246,7 +247,7 @@ export default function Home() {
             <ProductStrip accentOf={accentOf} onOpen={setOpen} tabs={[
               { key: 'new', label: t('newArrivals'), icon: <Sparkles className="size-4" />, items: newest },
               { key: 'popular', label: t('popularTab'), icon: <Flame className="size-4" />, items: popular ?? [], ranked: true, empty: t('noSalesYet') }
-            ].filter(x => x.items.length > 0 || x.empty)} />
+            ]} />
 
             {/* ===== Recent orders ===== */}
             {recent && recent.length > 0 && (
@@ -266,6 +267,16 @@ export default function Home() {
                 </div>
               </section>
             )}
+
+            {/* ===== Help ===== */}
+            <Link to="/support" className="card flex min-h-[76px] items-center gap-3 p-4 transition active:scale-[.99]">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#25D366] text-white shadow-md"><LifeBuoy className="size-6" /></span>
+              <div className="min-w-0 flex-1">
+                <p className="font-extrabold">{t('supportTitle')}</p>
+                <p className="line-clamp-2 text-xs text-2">{t('supportShort')}</p>
+              </div>
+              <Chevron className="size-5 shrink-0 text-2" />
+            </Link>
 
             <footer className="flex flex-col items-center gap-1.5 pt-2 text-center text-xs font-semibold text-2">
               <div className="mb-1 h-1 w-16 rounded-full sanad-stripe" />

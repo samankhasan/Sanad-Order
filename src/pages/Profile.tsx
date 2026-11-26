@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { BadgeCheck, Camera, Download, LogOut, Moon, Sun, MonitorSmartphone, ShieldCheck, Smartphone, Trash2, FileText } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { BadgeCheck, Camera, ChevronLeft, ChevronRight, LifeBuoy, Download, LogOut, Moon, Sun, MonitorSmartphone, ShieldCheck, Smartphone, Trash2, FileText } from 'lucide-react'
 import { removeAvatarFile, uploadAvatar } from '../lib/image'
 import { displayIdentity, normalizePhone } from '../lib/identity'
 import { ANDROID_APK_URL, isNativeApp } from '../lib/native'
@@ -18,7 +19,7 @@ let deferredPrompt: BIPEvent | null = null
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e as BIPEvent })
 
 export default function Profile() {
-  const { t, lang, setLang, theme, setTheme } = usePrefs()
+  const { t, lang, setLang, theme, setTheme, dir } = usePrefs()
   const { profile, session, signOut, refreshProfile, isAdmin } = useAuth()
   const toast = useToast()
   const [f, setF] = useState({ full_name: '', username: '', phone: '', city: '', address: '' })
@@ -99,6 +100,15 @@ export default function Profile() {
             {profile?.avatar_url && <button onClick={() => setPhoto(null)} disabled={photoBusy} className="mt-1 block min-h-9 text-xs font-bold text-rose-600">{t('removePhoto')}</button>}
           </div>
         </section>
+
+        <Link to="/support" className="card flex min-h-[72px] items-center gap-3 p-4 transition active:scale-[.99]">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#25D366] text-white shadow-md"><LifeBuoy className="size-5" /></span>
+          <div className="min-w-0 flex-1">
+            <p className="font-extrabold">{t('support')}</p>
+            <p className="truncate text-xs text-2">{t('supportShort')}</p>
+          </div>
+          {dir === 'rtl' ? <ChevronLeft className="size-5 text-2" /> : <ChevronRight className="size-5 text-2" />}
+        </Link>
 
         <section className="card space-y-3 p-5">
           <h2 className="font-extrabold">{t('editProfile')}</h2>
