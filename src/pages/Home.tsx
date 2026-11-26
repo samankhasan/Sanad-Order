@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
+import { Browser } from '@capacitor/browser'
 import { Bell, ChevronLeft, ChevronRight, Flame, MessageCircle, PackageSearch, ReceiptText, RotateCcw, Search, Sparkles, X } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationsContext'
-import { useCategories, usePopularProducts, useProducts } from '../lib/data'
+import { useBanners, useCategories, usePopularProducts, useProducts } from '../lib/data'
 import { supabase } from '../lib/supabase'
 import { BrandLogo, EmptyState, ErrorBox, PullToRefresh, Skeleton, StatusBadge } from '../components/ui'
 import ProductCard from '../components/ProductCard'
 import ProductSheet from '../components/ProductSheet'
-import { assetUrl, money } from '../lib/format'
-import type { Order, Product } from '../lib/types'
+import { assetUrl, cn, money } from '../lib/format'
+import type { HomeBanner, Order, Product } from '../lib/types'
 import { setStatusBarOverride } from '../lib/native'
 
 function SectionTitle({ title, to, icon }: { title: string; to?: string; icon?: React.ReactNode }) {
@@ -23,17 +25,80 @@ function SectionTitle({ title, to, icon }: { title: string; to?: string; icon?: 
   )
 }
 
-function ProductStrip({ title, icon, items, accentOf, onOpen }: { title: string; icon: React.ReactNode; items: Product[]; accentOf: (id: string) => string | undefined; onOpen: (p: Product) => void }) {
+type StripTab = { key: string; label: string; icon: React.ReactNode; items: Product[] }
+
+/** One horizontal row of products; the title row switches between lists (newest / most popular). */
+function ProductStrip({ tabs, accentOf, onOpen }: { tabs: StripTab[]; accentOf: (id: string) => string | undefined; onOpen: (p: Product) => void }) {
+  const [active, setActive] = useState(tabs[0]?.key)
+  const tab = tabs.find(x => x.key === active) ?? tabs[0]
+  if (!tab) return null
   return (
     <section>
-      <SectionTitle title={title} icon={icon} />
-      <div className="no-scrollbar -mx-[var(--gutter)] flex snap-x gap-3 overflow-x-auto px-[var(--gutter)] pb-1">
-        {items.map((p, i) => (
+      <div className="no-scrollbar mb-3 flex min-h-12 items-center gap-2 overflow-x-auto">
+        {tabs.map(x => (
+          <button key={x.key} onClick={() => setActive(x.key)} aria-pressed={x.key === tab.key}
+            className={cn('flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-extrabold transition',
+              x.key === tab.key ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow' : 'surface-2 text-2')}>
+            {x.icon}{x.label}
+          </button>
+        ))}
+      </div>
+      <div key={tab.key} className="no-scrollbar -mx-[var(--gutter)] flex snap-x gap-3 overflow-x-auto px-[var(--gutter)] pb-1">
+        {tab.items.map((p, i) => (
           <div key={p.id} className="w-[44%] max-w-[200px] shrink-0 snap-start xs:w-[40%] sm:w-48">
             <ProductCard index={i} product={p} accent={accentOf(p.category_id)} onOpen={() => onOpen(p)} />
           </div>
         ))}
       </div>
+    </section>
+  )
+}
+
+/** Ad banners set by the admin (Admin → Ads). Swipeable; advances on its own every few seconds. */
+function Banners({ items }: { items: HomeBanner[] }) {
+  const navigate = useNavigate()
+  const ref = useRef<HTMLDivElement>(null)
+  const [cur, setCur] = useState(0)
+  const many = items.length > 1
+  useEffect(() => {
+    if (!many) return
+    const id = setInterval(() => {
+      const el = ref.current; if (!el) return
+      const next = (cur + 1) % items.length
+      const child = el.children[next] as HTMLElement | undefined
+      const r = el.getBoundingClientRect()
+      // only while the banners are fully on screen, so the page never jumps
+      if (child && r.top >= 0 && r.bottom <= innerHeight) child.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    }, 5000)
+    return () => clearInterval(id)
+  }, [cur, many, items.length])
+  function onScroll() {
+    const el = ref.current; if (!el) return
+    const w = (el.children[0] as HTMLElement | undefined)?.offsetWidth || 1
+    setCur(Math.min(items.length - 1, Math.round(Math.abs(el.scrollLeft) / w)))
+  }
+  function open(link: string | null) {
+    if (!link) return
+    if (/^https?:\/\//i.test(link)) {
+      if (Capacitor.isNativePlatform()) Browser.open({ url: link })
+      else window.open(link, '_blank', 'noopener')
+    } else navigate(link.replace(/^#/, ''))
+  }
+  return (
+    <section>
+      <div ref={ref} onScroll={onScroll} className="no-scrollbar -mx-[var(--gutter)] flex snap-x snap-mandatory gap-3 overflow-x-auto px-[var(--gutter)]">
+        {items.map(b => (
+          <button key={b.slot} onClick={() => open(b.link)} disabled={!b.link}
+            className={cn('rise relative aspect-[2/1] shrink-0 snap-center overflow-hidden rounded-[24px] bg-[var(--surface-2)] shadow-sm transition active:scale-[.98] disabled:active:scale-100', many ? 'w-[88%] sm:w-[calc(50%-6px)]' : 'w-full')}>
+            <img src={b.image_url!} alt="" className="size-full object-cover" loading="lazy" />
+          </button>
+        ))}
+      </div>
+      {many && (
+        <div className="mt-2 flex justify-center gap-1.5 sm:hidden">
+          {items.map((b, i) => <span key={b.slot} className={cn('h-1.5 rounded-full transition-all', i === cur ? 'w-5 bg-[var(--primary)]' : 'w-1.5 bg-[var(--surface-3)]')} />)}
+        </div>
+      )}
     </section>
   )
 }
@@ -45,6 +110,7 @@ export default function Home() {
   const { categories, error, reload } = useCategories()
   const { products, reload: reloadProducts } = useProducts()
   const { popular, reload: reloadPopular } = usePopularProducts(10)
+  const { banners, reload: reloadBanners } = useBanners()
   const [q, setQ] = useState('')
   const [open, setOpen] = useState<Product | null>(null)
   const [recent, setRecent] = useState<Order[] | null>(null)
@@ -57,7 +123,7 @@ export default function Home() {
   }, [session])
   useEffect(() => { loadRecent() }, [loadRecent])
   useEffect(() => { setStatusBarOverride('light'); return () => setStatusBarOverride(null) }, [])
-  const refresh = useCallback(() => Promise.all([reload(), reloadProducts(), reloadPopular(), loadRecent()]), [reload, reloadProducts, reloadPopular, loadRecent])
+  const refresh = useCallback(() => Promise.all([reload(), reloadProducts(), reloadPopular(), reloadBanners(), loadRecent()]), [reload, reloadProducts, reloadPopular, reloadBanners, loadRecent])
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {}
@@ -168,15 +234,14 @@ export default function Home() {
               </div>
             </section>
 
-            {/* ===== Best sellers ===== */}
-            {popular && popular.length > 0 && (
-              <ProductStrip title={t('popular')} icon={<Flame className="size-5 text-s-red" />} items={popular} accentOf={accentOf} onOpen={setOpen} />
-            )}
+            {/* ===== Ads (admin-managed) ===== */}
+            {banners && banners.length > 0 && <Banners items={banners} />}
 
-            {/* ===== New arrivals ===== */}
-            {newest.length > 0 && (
-              <ProductStrip title={t('newArrivals')} icon={<Sparkles className="size-5 text-s-yellow" />} items={newest} accentOf={accentOf} onOpen={setOpen} />
-            )}
+            {/* ===== Newest / most popular (one row) ===== */}
+            <ProductStrip accentOf={accentOf} onOpen={setOpen} tabs={[
+              { key: 'new', label: t('newArrivals'), icon: <Sparkles className="size-4" />, items: newest },
+              { key: 'popular', label: t('popularTab'), icon: <Flame className="size-4" />, items: popular ?? [] }
+            ].filter(x => x.items.length > 0)} />
 
             {/* ===== Recent orders ===== */}
             {recent && recent.length > 0 && (
