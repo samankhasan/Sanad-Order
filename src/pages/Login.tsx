@@ -36,6 +36,14 @@ export default function Login() {
     return { ...empty, id }
   })
 
+  // an error coming back from Google (or an expired link) is shown clearly
+  useEffect(() => {
+    try {
+      const err = sessionStorage.getItem('so.authError')
+      if (err) { sessionStorage.removeItem('so.authError'); toast(/provider is not enabled/i.test(err) ? t('googleNotReady') : err, 'error') }
+    } catch { /* ignore */ }
+  }, [toast, t])
+
   // offer a saved password (Chrome / Android) to fill the form
   useEffect(() => {
     const nav = navigator as Navigator & { credentials?: { get?: (o: unknown) => Promise<Credential | null> } }
@@ -136,9 +144,6 @@ export default function Login() {
             ))}
           </div>
           <GoogleButton />
-          <div className="my-4 flex items-center gap-3 text-xs font-bold text-2">
-            <span className="h-px flex-1 bg-[var(--border)]" />{t('orDivider')}<span className="h-px flex-1 bg-[var(--border)]" />
-          </div>
           <form onSubmit={submit} method="post" action="#" autoComplete="on" className="space-y-3">
             {mode === 'in' ? (
               <div className="relative">

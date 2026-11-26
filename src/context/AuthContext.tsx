@@ -43,7 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (query.get('code')) {
         await supabase.auth.exchangeCodeForSession(query.get('code')!) // recovery is flagged by the PASSWORD_RECOVERY event
         clean()
-      } else if (hash.get('error_description')) {
+      } else if (hash.get('error_description') || query.get('error_description')) {
+        try { sessionStorage.setItem('so.authError', (hash.get('error_description') || query.get('error_description'))!.replace(/\+/g, ' ')) } catch { /* ignore */ }
         clean()
       }
     }
