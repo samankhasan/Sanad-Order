@@ -1,4 +1,8 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { Ban } from 'lucide-react'
+import { supabase } from './lib/supabase'
+import { deviceId } from './lib/analytics'
+import { usePrefs } from './context/PrefsContext'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import AppShell from './components/AppShell'
@@ -36,6 +40,33 @@ function Splash() {
   )
 }
 
+/** Blocked members (and their devices / connection) see only this screen. */
+function useBlocked(userId: string | null, profileBlocked: boolean) {
+  const [blocked, setBlocked] = useState(false)
+  useEffect(() => {
+    let live = true
+    supabase.rpc('access_check', { p_device: deviceId() }).then(({ data }) => { if (live) setBlocked(data === true) }, () => {})
+    return () => { live = false }
+  }, [userId, profileBlocked])
+  return blocked || profileBlocked
+}
+
+function Blocked() {
+  const { t } = usePrefs()
+  const { session } = useAuth()
+  // a still-valid session is dropped so nothing else can be used
+  useEffect(() => { if (session) supabase.auth.signOut({ scope: 'local' }) }, [session])
+  return (
+    <div className="grid min-h-dvh place-items-center px-6 text-center">
+      <div className="flex max-w-sm flex-col items-center gap-4">
+        <span className="grid size-20 place-items-center rounded-[28px] bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"><Ban className="size-10" /></span>
+        <h1 className="text-xl font-black">{t('accountBlockedTitle')}</h1>
+        <p className="text-sm leading-7 text-2">{t('accountBlocked')}</p>
+      </div>
+    </div>
+  )
+}
+
 function AdminOnly({ children }: { children: ReactNode }) {
   const { isAdmin, profile } = useAuth()
   if (!profile) return <Splash />
@@ -44,7 +75,9 @@ function AdminOnly({ children }: { children: ReactNode }) {
 
 export default function App() {
   const { session, loading, recovery, profile } = useAuth()
+  const blocked = useBlocked(session?.user.id ?? null, !!profile?.blocked_at && profile.role !== 'admin')
   if (loading) return <Splash />
+  if (blocked) return <Blocked />
   if (!session) return <Login />
   if (recovery) return <SetPassword />
   if (needsProfileCompletion(profile)) return <CompleteProfile />

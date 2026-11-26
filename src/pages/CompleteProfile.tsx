@@ -51,7 +51,7 @@ export default function CompleteProfile() {
       }).eq('id', session.user.id)
       if (error) throw error
       await refreshProfile()
-    } catch (err) { toast((err as Error).message, 'error') } finally { setBusy(false) }
+    } catch (err) { const m = (err as Error).message; toast(/account_blocked/.test(m) ? t('accountBlocked') : m, 'error') } finally { setBusy(false) }
   }
 
   return (
