@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'customer'
+export type Role = 'admin' | 'operator' | 'customer'
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'on_the_way' | 'delivered' | 'cancelled'
 
 export interface Profile {
@@ -13,6 +13,7 @@ export interface Profile {
   lang?: 'ku' | 'ar' | 'en'
   notifications_seen_at?: string
   blocked_at?: string | null
+  avatar_url?: string | null
   created_at: string
 }
 

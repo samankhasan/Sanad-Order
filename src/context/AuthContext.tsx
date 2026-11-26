@@ -9,6 +9,10 @@ interface Auth {
   profile: Profile | null
   loading: boolean
   isAdmin: boolean
+  /** operator: may only add members and products */
+  isOperator: boolean
+  /** admin or operator */
+  isStaff: boolean
   refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
   /** true after opening a password-reset link: the app asks for a new password */
@@ -69,6 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     loading,
     isAdmin: profile?.role === 'admin',
+    isOperator: profile?.role === 'operator',
+    isStaff: profile?.role === 'admin' || profile?.role === 'operator',
     refreshProfile: () => loadProfile(session?.user.id),
     signOut: async () => { await supabase.auth.signOut() },
     recovery,

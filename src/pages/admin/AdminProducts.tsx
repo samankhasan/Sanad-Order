@@ -9,6 +9,7 @@ import { useCategories, useProducts, useSubcategories } from '../../lib/data'
 import { subName } from './AdminCategories'
 import { EmptyState, ErrorBox, Skeleton, Thumb } from '../../components/ui'
 import ProductForm from './ProductForm'
+import { useAuth } from '../../context/AuthContext'
 import { cn, money } from '../../lib/format'
 import type { Category, Product, Subcategory } from '../../lib/types'
 import { supabase } from '../../lib/supabase'
@@ -18,6 +19,7 @@ import { haptic } from '../../lib/native'
 export default function AdminProducts() {
   const { t, catName } = usePrefs()
   const { categories } = useCategories()
+  const { isAdmin } = useAuth()
   const [cat, setCat] = useState<string | null>(null)
   const { products, error, reload } = useProducts(null, { includeHidden: true })
   const { subcategories } = useSubcategories(null, { includeHidden: true })
@@ -34,7 +36,7 @@ export default function AdminProducts() {
 
   // drag & drop ordering: only inside one brand and without a search filter
   // reorder in 'All' or inside one brand; disabled only while searching
-  const canSort = !q.trim()
+  const canSort = isAdmin && !q.trim()
   const [order, setOrder] = useState<Product[]>([])
   useEffect(() => { setOrder(list) }, [list])
   const sensors = useSensors(
@@ -92,9 +94,10 @@ export default function AdminProducts() {
       {error && <ErrorBox message={error} onRetry={reload} />}
       {!products && <Skeleton className="h-96 rounded-3xl" />}
       {products && list.length === 0 && <EmptyState icon={<PackageOpen className="size-9" />} title={t('noProducts')} action={<button onClick={() => setEditing('new')} className="btn btn-primary"><Plus className="size-5" />{t('newProduct')}</button>} />}
-      <button disabled={!!optimizing || !products?.length} onClick={optimizeAll} className="flex min-h-10 items-center gap-1.5 rounded-xl px-2 text-xs font-bold text-brand disabled:opacity-60">
+      {isAdmin && <button disabled={!!optimizing || !products?.length} onClick={optimizeAll} className="flex min-h-10 items-center gap-1.5 rounded-xl px-2 text-xs font-bold text-brand disabled:opacity-60">
         <Zap className="size-4" />{optimizing ? `${t('optimizing')} ${optimizing}` : t('optimizeImages')}
-      </button>
+      </button>}
+      {!isAdmin && <p className="flex items-start gap-2 rounded-2xl surface-2 p-3 text-xs font-semibold text-2"><Info className="size-4 shrink-0" />{t('operatorProductsHint')}</p>}
       {list.length > 1 && canSort && (
         <p className="flex items-center gap-2 px-1 text-xs font-semibold text-2"><Info className="size-4 shrink-0" />{t('reorderHint')}</p>
       )}
@@ -103,7 +106,7 @@ export default function AdminProducts() {
           <SortableContext items={order.map(p => p.id)} strategy={verticalListSortingStrategy} disabled={!canSort}>
             <ul className="card divide-y divide-[var(--border)] overflow-hidden">
               {order.map(p => (
-                <ProductRow key={p.id} p={p} sortable={canSort} c={catOf(p.category_id)} sub={subOf(p.subcategory_id)} onOpen={() => setEditing(p)} />
+                <ProductRow key={p.id} p={p} sortable={canSort} c={catOf(p.category_id)} sub={subOf(p.subcategory_id)} onOpen={isAdmin ? () => setEditing(p) : undefined} />
               ))}
             </ul>
           </SortableContext>
@@ -121,7 +124,7 @@ export default function AdminProducts() {
   )
 }
 
-function ProductRow({ p, c, sub, sortable, onOpen }: { p: Product; c?: Category; sub?: Subcategory; sortable: boolean; onOpen: () => void }) {
+function ProductRow({ p, c, sub, sortable, onOpen }: { p: Product; c?: Category; sub?: Subcategory; sortable: boolean; onOpen?: () => void }) {
   const { t, lang, catName } = usePrefs()
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: !sortable })
   return (
@@ -132,7 +135,7 @@ function ProductRow({ p, c, sub, sortable, onOpen }: { p: Product; c?: Category;
           <GripVertical className="size-5" />
         </button>
       )}
-      <button onClick={onOpen} className={cn('flex min-w-0 flex-1 items-center gap-3 py-3 pe-3 text-start transition hover:bg-[var(--surface-2)]', !sortable && 'ps-3')}>
+      <button onClick={onOpen} disabled={!onOpen} className={cn('flex min-w-0 flex-1 items-center gap-3 py-3 pe-3 text-start transition enabled:hover:bg-[var(--surface-2)]', !sortable && 'ps-3')}>
         <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-white">
           {p.image_url ? <Thumb src={p.image_url} className="size-full object-contain p-1" /> : <ImageOff className="size-5 text-gray-300" />}
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { AtSign, Ban, KeyRound, Mail, MapPin, Pencil, Phone, Search, ShieldCheck, Trash2, UserRound, Home as HomeIcon } from 'lucide-react'
+import { AtSign, Ban, BadgeCheck, KeyRound, Lock, Mail, MapPin, Pencil, Phone, Search, ShieldCheck, Trash2, UserPlus, UserRound, Home as HomeIcon } from 'lucide-react'
 import { placeLabel } from '../../lib/iraq'
 import { usePrefs } from '../../context/PrefsContext'
 import { useAuth } from '../../context/AuthContext'
@@ -9,9 +9,9 @@ import { ErrorBox, Sheet, Skeleton, Spinner } from '../../components/ui'
 import CitySelect from '../../components/CitySelect'
 import { cn, dateTime } from '../../lib/format'
 import { normalizePhone } from '../../lib/identity'
-import type { Profile } from '../../lib/types'
+import type { Profile, Role } from '../../lib/types'
 
-type Filter = 'all' | 'blocked' | 'admin'
+type Filter = 'all' | 'blocked' | 'staff'
 
 async function account(body: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke('account', { body })
@@ -90,10 +90,74 @@ function EditMember({ member, onClose, onSaved }: { member: Profile; onClose: ()
   )
 }
 
+function CreateMember({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const { t } = usePrefs()
+  const { isAdmin } = useAuth()
+  const toast = useToast()
+  const [f, setF] = useState({ full_name: '', username: '', phone: '', email: '', password: '', city: '', address: '', role: 'customer' as Role })
+  const [busy, setBusy] = useState(false)
+  async function save(e: FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    try {
+      await account({ action: 'staff_create_user', ...f })
+      toast(t('memberCreated')); onSaved(); onClose()
+    } catch (err) {
+      const m = (err as Error).message
+      const map: Record<string, string> = { username_taken: t('usernameTaken'), phone_taken: t('alreadyRegistered'), already_registered: t('alreadyRegistered'), account_blocked: t('accountBlocked'), password_too_short: t('passwordShort'), phone_or_email_required: t('phoneOrEmailRequired') }
+      toast(map[m] ?? m, 'error')
+    } finally { setBusy(false) }
+  }
+  const icon = 'pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-2'
+  return (
+    <form onSubmit={save} className="space-y-3 p-5">
+      <h2 className="flex items-center gap-2 text-lg font-extrabold"><UserPlus className="size-5" />{t('addMember')}</h2>
+      <div className="relative"><UserRound className={icon} />
+        <input required className="field ps-12" placeholder={t('fullName')} aria-label={t('fullName')} value={f.full_name} onChange={e => setF({ ...f, full_name: e.target.value })} /></div>
+      <div className="relative"><AtSign className={icon} />
+        <input dir="ltr" pattern="[a-z0-9._]{3,30}" maxLength={30} className="field px-12 text-start rtl:text-right" placeholder={t('username')} aria-label={t('username')}
+          value={f.username} onChange={e => setF({ ...f, username: e.target.value.replace(/[^A-Za-z0-9._]/g, '').toLowerCase() })} autoCapitalize="none" spellCheck={false} /></div>
+      <div className="relative"><Phone className={icon} />
+        <input required type="tel" dir="ltr" className="field px-12 text-start rtl:text-right" placeholder={t('phone')} aria-label={t('phone')} value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} /></div>
+      <div className="relative"><Mail className={icon} />
+        <input type="email" dir="ltr" className="field px-12 text-start rtl:text-right" placeholder={`${t('email')} (${t('optional')})`} aria-label={t('email')} value={f.email} onChange={e => setF({ ...f, email: e.target.value })} /></div>
+      <div className="relative"><Lock className={icon} />
+        <input required minLength={6} dir="ltr" className="field px-12 text-start rtl:text-right" placeholder={t('password')} aria-label={t('password')} value={f.password} onChange={e => setF({ ...f, password: e.target.value })} autoComplete="new-password" /></div>
+      <p className="label !mb-0 pt-1">{t('address')}</p>
+      <CitySelect withIcon value={f.city} onChange={city => setF({ ...f, city })} />
+      <div className="relative">
+        <HomeIcon className="pointer-events-none absolute start-4 top-4 size-5 text-2" />
+        <textarea rows={2} className="field resize-none ps-12" placeholder={t('fullAddress')} aria-label={t('fullAddress')} value={f.address} onChange={e => setF({ ...f, address: e.target.value })} />
+      </div>
+      {isAdmin && (
+        <div>
+          <p className="label">{t('role')}</p>
+          <RolePicker value={f.role} onChange={role => setF({ ...f, role })} />
+        </div>
+      )}
+      <button disabled={busy} className="btn btn-primary min-h-14 w-full text-base">{busy && <Spinner />}{t('addMember')}</button>
+    </form>
+  )
+}
+
+const ROLES: Role[] = ['customer', 'operator', 'admin']
+function RolePicker({ value, onChange, disabled }: { value: Role; onChange: (r: Role) => void; disabled?: boolean }) {
+  const { t } = usePrefs()
+  return (
+    <div className="grid grid-cols-3 gap-1 rounded-2xl surface-2 p-1">
+      {ROLES.map(r => (
+        <button type="button" key={r} disabled={disabled} onClick={() => onChange(r)}
+          className={cn('min-h-11 rounded-xl px-2 text-xs font-bold transition disabled:opacity-50', value === r ? 'surface shadow' : 'text-2')}>{t(`role_${r}` as const)}</button>
+      ))}
+    </div>
+  )
+}
+
 export default function AdminCustomers() {
   const { t, lang } = usePrefs()
-  const { session } = useAuth()
+  const { session, isAdmin } = useAuth()
   const toast = useToast()
+  const [creating, setCreating] = useState(false)
   const [rows, setRows] = useState<Profile[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [q, setQ] = useState('')
@@ -114,9 +178,8 @@ export default function AdminCustomers() {
     finally { setBusy(null) }
   }
 
-  function toggleRole(p: Profile) {
-    const role = p.role === 'admin' ? 'customer' : 'admin'
-    if (!confirm(role === 'admin' ? t('makeAdmin') + '?' : t('removeAdmin') + '?')) return
+  function setRole(p: Profile, role: Role) {
+    if (role === p.role || !confirm(`${p.full_name ?? ''}\n${t('role')}: ${t(`role_${role}` as const)}?`)) return
     run(p, async () => { const { error } = await supabase.from('profiles').update({ role }).eq('id', p.id); if (error) throw error })
   }
   function resetPassword(p: Profile) {
@@ -136,13 +199,13 @@ export default function AdminCustomers() {
   const counts = useMemo(() => ({
     all: rows?.length ?? 0,
     blocked: rows?.filter(p => p.blocked_at).length ?? 0,
-    admin: rows?.filter(p => p.role === 'admin').length ?? 0
+    staff: rows?.filter(p => p.role !== 'customer').length ?? 0
   }), [rows])
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase()
     return (rows ?? [])
-      .filter(p => filter === 'all' || (filter === 'blocked' ? !!p.blocked_at : p.role === 'admin'))
+      .filter(p => filter === 'all' || (filter === 'blocked' ? !!p.blocked_at : p.role !== 'customer'))
       .filter(p => !s || [p.full_name, p.username, p.phone, p.city, p.address, placeLabel(p.city, lang)].some(v => v?.toLowerCase().includes(s)))
   }, [rows, q, filter, lang])
 
@@ -150,12 +213,15 @@ export default function AdminCustomers() {
 
   return (
     <div className="space-y-3">
-      <div className="relative">
-        <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-2" />
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder={t('searchPlaceholder')} className="field ps-12" />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-2" />
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder={t('searchPlaceholder')} className="field ps-12" />
+        </div>
+        <button onClick={() => setCreating(true)} className="btn btn-primary shrink-0"><UserPlus className="size-5" /><span className="hidden sm:inline">{t('addMember')}</span></button>
       </div>
       <div className="no-scrollbar flex gap-2 overflow-x-auto">
-        {([['all', t('allMembers')], ['blocked', t('blocked')], ['admin', t('admin')]] as [Filter, string][]).map(([k, label]) => (
+        {([['all', t('allMembers')], ['blocked', t('blocked')], ['staff', t('staff')]] as [Filter, string][]).map(([k, label]) => (
           <button key={k} onClick={() => setFilter(k)} className={cn('filter-chip', filter === k && '!border-transparent !bg-[var(--primary)] !text-[var(--on-primary)]')}>
             {label} <span className="opacity-70" dir="ltr">{counts[k]}</span>
           </button>
@@ -170,13 +236,14 @@ export default function AdminCustomers() {
           return (
             <div key={p.id} className={cn('card p-4', isBlocked && 'ring-2 ring-rose-500/40')}>
               <div className="flex items-start gap-3">
-                <div className={cn('grid size-12 shrink-0 place-items-center rounded-2xl text-lg font-black', isBlocked ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400' : 'surface-2')}>
-                  {isBlocked ? <Ban className="size-6" /> : (p.full_name || '?').slice(0, 1).toUpperCase()}
+                <div className={cn('grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl text-lg font-black', isBlocked ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400' : 'surface-2')}>
+                  {isBlocked ? <Ban className="size-6" /> : p.avatar_url ? <img src={p.avatar_url} alt="" className="size-full object-cover" /> : (p.full_name || '?').slice(0, 1).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 truncate font-extrabold">
                     <span className="truncate">{p.full_name || '—'}</span>
                     {p.role === 'admin' && <ShieldCheck className="size-4 shrink-0 text-emerald-600" />}
+                    {p.role === 'operator' && <span className="chip shrink-0 bg-sky-100 !py-0.5 text-[11px] text-sky-700 dark:bg-sky-950 dark:text-sky-300"><BadgeCheck className="size-3" />{t('role_operator')}</span>}
                     {isBlocked && <span className="chip shrink-0 bg-rose-100 !py-0.5 text-[11px] text-rose-700 dark:bg-rose-950 dark:text-rose-300">{t('blocked')}</span>}
                   </p>
                   <p className="text-xs text-2">{dateTime(p.created_at, lang)}</p>
@@ -190,19 +257,26 @@ export default function AdminCustomers() {
               {(p.city || p.address) && (
                 <p className="mt-2 flex items-start gap-1.5 text-xs text-2"><MapPin className="mt-0.5 size-3.5 shrink-0" /><span><b>{placeLabel(p.city, lang)}</b>{p.address && ` — ${p.address}`}</span></p>
               )}
-              <div className="mt-2 flex flex-wrap gap-0.5 border-t border-theme pt-2">
-                <button onClick={() => setEditing(p)} className={cn(actionCls, 'text-brand')}><Pencil className="size-4" />{t('edit')}</button>
-                {!self && <>
-                  <button disabled={!!busy} onClick={() => resetPassword(p)} className={cn(actionCls, 'text-2')}><KeyRound className="size-4" />{t('resetPassword')}</button>
-                  {p.role !== 'admin' && <button disabled={!!busy} onClick={() => toggleBlock(p)} className={cn(actionCls, isBlocked ? 'text-emerald-600' : 'text-amber-600')}><Ban className="size-4" />{isBlocked ? t('unblock') : t('block')}</button>}
-                  <button disabled={!!busy || isBlocked} onClick={() => toggleRole(p)} className={cn(actionCls, 'text-2')}><ShieldCheck className="size-4" />{p.role === 'admin' ? t('removeAdmin') : t('makeAdmin')}</button>
-                  {p.role !== 'admin' && <button disabled={!!busy} onClick={() => remove(p)} className={cn(actionCls, 'text-rose-600')}><Trash2 className="size-4" />{t('deleteMember')}</button>}
-                </>}
-              </div>
+              {isAdmin && (
+                <div className="mt-2 flex flex-wrap gap-0.5 border-t border-theme pt-2">
+                  <button onClick={() => setEditing(p)} className={cn(actionCls, 'text-brand')}><Pencil className="size-4" />{t('edit')}</button>
+                  {!self && <>
+                    <button disabled={!!busy} onClick={() => resetPassword(p)} className={cn(actionCls, 'text-2')}><KeyRound className="size-4" />{t('resetPassword')}</button>
+                    {p.role === 'customer' && <button disabled={!!busy} onClick={() => toggleBlock(p)} className={cn(actionCls, isBlocked ? 'text-emerald-600' : 'text-amber-600')}><Ban className="size-4" />{isBlocked ? t('unblock') : t('block')}</button>}
+                    {p.role === 'customer' && <button disabled={!!busy} onClick={() => remove(p)} className={cn(actionCls, 'text-rose-600')}><Trash2 className="size-4" />{t('deleteMember')}</button>}
+                  </>}
+                </div>
+              )}
+              {isAdmin && !self && !isBlocked && (
+                <div className="mt-2"><RolePicker value={p.role} disabled={!!busy} onChange={r => setRole(p, r)} /></div>
+              )}
             </div>
           )
         })}
       </div>
+      <Sheet open={creating} onClose={() => setCreating(false)}>
+        {creating && <CreateMember onClose={() => setCreating(false)} onSaved={load} />}
+      </Sheet>
       <Sheet open={!!editing} onClose={() => setEditing(null)}>
         {editing && <EditMember member={editing} onClose={() => setEditing(null)} onSaved={load} />}
       </Sheet>

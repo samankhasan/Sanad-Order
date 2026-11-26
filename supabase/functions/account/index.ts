@@ -5,6 +5,8 @@
 //   { action: "admin_set_email", user_id, email }            admin only: change the member's sign-in e-mail
 //   { action: "admin_block", user_id, blocked }              admin only: block / unblock (auth ban + profiles.blocked_at + devices/IPs/phone/e-mail)
 //   { action: "admin_delete_user", user_id }                 admin only: permanently delete a member (orders cascade)
+//   { action: "staff_create_user", full_name, username, phone, email?, password, city, address, role? }
+//                                                            admin or operator: create a member (only admins may give a staff role)
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4'
 
 const cors = {
@@ -30,9 +32,36 @@ Deno.serve(async req => {
       return json({ ok: true })
     }
 
-    if (String(body.action).startsWith('admin_')) {
-      const { data: me } = await admin.from('profiles').select('role').eq('id', u.user.id).single()
-      if (me?.role !== 'admin') return json({ error: 'forbidden' }, 403)
+    const { data: me } = await admin.from('profiles').select('role, blocked_at').eq('id', u.user.id).single()
+    if (String(body.action).startsWith('admin_') && (me?.role !== 'admin' || me?.blocked_at)) return json({ error: 'forbidden' }, 403)
+    if (String(body.action).startsWith('staff_') && (!['admin', 'operator'].includes(me?.role ?? '') || me?.blocked_at)) return json({ error: 'forbidden' }, 403)
+
+    if (body.action === 'staff_create_user') {
+      const role = me?.role === 'admin' && ['customer', 'operator', 'admin'].includes(body.role) ? String(body.role) : 'customer'
+      const username = String(body.username ?? '').trim().toLowerCase()
+      const password = String(body.password ?? '')
+      const fullName = String(body.full_name ?? '').trim()
+      if (!fullName) return json({ error: 'name_required' }, 400)
+      if (password.length < 6) return json({ error: 'password_too_short' }, 400)
+      if (username) {
+        const { data: free } = await admin.rpc('username_available', { p_username: username })
+        if (!free) return json({ error: 'username_taken' }, 400)
+      }
+      const { data: phone } = await admin.rpc('normalize_phone', { p: String(body.phone ?? '') })
+      let email = String(body.email ?? '').trim().toLowerCase()
+      if (!email) {
+        if (!phone) return json({ error: 'phone_or_email_required' }, 400)
+        const { data: taken } = await admin.from('profiles').select('id').eq('phone', phone).limit(1)
+        if (taken?.length) return json({ error: 'phone_taken' }, 400)
+        email = `${phone}@phone.sanadorder.app`
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'invalid_email' }, 400)
+      const { data: created, error } = await admin.auth.admin.createUser({
+        email, password, email_confirm: true,
+        user_metadata: { full_name: fullName, username: username || null, phone: phone || null, city: String(body.city ?? '') || null, address: String(body.address ?? '').trim() || null }
+      })
+      if (error) return json({ error: /already/i.test(error.message) ? 'already_registered' : /database error/i.test(error.message) ? 'account_blocked' : error.message }, 400)
+      if (role !== 'customer') await admin.from('profiles').update({ role }).eq('id', created.user.id)
+      return json({ ok: true, user_id: created.user.id })
     }
     const target = String(body.user_id ?? '')
     // block / delete: never yourself, never another admin (remove the admin role first)
@@ -40,7 +69,7 @@ Deno.serve(async req => {
       if (!target || target === u.user!.id) return 'not_allowed_on_self'
       const { data: p } = await admin.from('profiles').select('role').eq('id', target).single()
       if (!p) return 'not_found'
-      if (p.role === 'admin') return 'remove_admin_first'
+      if (p.role !== 'customer') return 'remove_admin_first'
       return null
     }
 

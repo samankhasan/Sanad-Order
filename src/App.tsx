@@ -68,9 +68,15 @@ function Blocked() {
 }
 
 function AdminOnly({ children }: { children: ReactNode }) {
-  const { isAdmin, profile } = useAuth()
+  const { isAdmin, isStaff, profile } = useAuth()
   if (!profile) return <Splash />
-  return isAdmin ? <>{children}</> : <Navigate to="/" replace />
+  return isAdmin ? <>{children}</> : <Navigate to={isStaff ? '/admin/products' : '/'} replace />
+}
+
+function StaffOnly({ children }: { children: ReactNode }) {
+  const { isStaff, profile } = useAuth()
+  if (!profile) return <Splash />
+  return isStaff ? <>{children}</> : <Navigate to="/" replace />
 }
 
 export default function App() {
@@ -94,14 +100,14 @@ export default function App() {
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="profile" element={<Profile />} />
             <Route path="notifications" element={<Notifications />} />
-            <Route path="admin" element={<AdminOnly><AdminLayout /></AdminOnly>}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="orders" element={<AdminOrders />} />
+            <Route path="admin" element={<StaffOnly><AdminLayout /></StaffOnly>}>
+              <Route index element={<AdminOnly><AdminDashboard /></AdminOnly>} />
+              <Route path="orders" element={<AdminOnly><AdminOrders /></AdminOnly>} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="customers" element={<AdminCustomers />} />
-              <Route path="notify" element={<AdminNotify />} />
-              <Route path="banners" element={<AdminBanners />} />
-              <Route path="categories" element={<AdminCategories />} />
+              <Route path="notify" element={<AdminOnly><AdminNotify /></AdminOnly>} />
+              <Route path="banners" element={<AdminOnly><AdminBanners /></AdminOnly>} />
+              <Route path="categories" element={<AdminOnly><AdminCategories /></AdminOnly>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
