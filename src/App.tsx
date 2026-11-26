@@ -16,6 +16,7 @@ import Orders from './pages/Orders'
 import OrderDetail from './pages/OrderDetail'
 import Profile from './pages/Profile'
 import Notifications from './pages/Notifications'
+import Support from './pages/Support'
 import { NotificationsProvider } from './context/NotificationsContext'
 import { assetUrl } from './lib/format'
 
@@ -28,6 +29,7 @@ const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'))
 const AdminNotify = lazy(() => import('./pages/admin/AdminNotify'))
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'))
 const AdminBanners = lazy(() => import('./pages/admin/AdminBanners'))
+const AdminSupport = lazy(() => import('./pages/admin/AdminSupport'))
 
 function Splash() {
   return (
@@ -100,6 +102,7 @@ export default function App() {
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="profile" element={<Profile />} />
             <Route path="notifications" element={<Notifications />} />
+            <Route path="support" element={<Support />} />
             <Route path="admin" element={<StaffOnly><AdminLayout /></StaffOnly>}>
               <Route index element={<AdminOnly><AdminDashboard /></AdminOnly>} />
               <Route path="orders" element={<AdminOnly><AdminOrders /></AdminOnly>} />
@@ -107,6 +110,7 @@ export default function App() {
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="notify" element={<AdminOnly><AdminNotify /></AdminOnly>} />
               <Route path="banners" element={<AdminOnly><AdminBanners /></AdminOnly>} />
+              <Route path="support" element={<AdminOnly><AdminSupport /></AdminOnly>} />
               <Route path="categories" element={<AdminOnly><AdminCategories /></AdminOnly>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

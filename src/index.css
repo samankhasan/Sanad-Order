@@ -239,7 +239,18 @@
 @media print {
   /* margin 0 removes the browser's printed URL / date / title; the sheet gets its own padding */
   @page { size: A4; margin: 0; }
-  body { padding: 14mm 14mm 12mm !important; }
+  body { padding: 14mm 14mm 26mm !important; }
+  /* invoice: page footer with the contact note, and a large faint logo in the middle of every page */
+  .invoice-footer {
+    position: fixed; inset-inline: 14mm; bottom: 9mm;
+    align-items: center; justify-content: center; flex-wrap: wrap; gap: 0 .5rem;
+    border-top: 1px solid #d1d5db; padding-top: 3mm; font-size: 11px; color: #111;
+  }
+  .invoice-watermark {
+    position: fixed; top: 50%; left: 50%; width: 120mm; height: auto;
+    transform: translate(-50%, -50%); opacity: .05; z-index: 0; pointer-events: none;
+    print-color-adjust: exact; -webkit-print-color-adjust: exact;
+  }
   .no-print, .nav-bar, .nav-rail { display: none !important; }
   html, body { background: #fff !important; color: #000 !important; }
   :root, :root.dark { --bg:#fff; --surface:#fff; --surface-2:#f3f4f6; --text:#000; --text-2:#333; --border:#d1d5db; }
