@@ -11,7 +11,6 @@ import { supabase } from '../lib/supabase'
 import { BrandLogo, EmptyState, ErrorBox, PullToRefresh, Skeleton, StatusBadge } from '../components/ui'
 import ProductCard from '../components/ProductCard'
 import ProductSheet from '../components/ProductSheet'
-import UpdateBanner from '../components/UpdateBanner'
 import { assetUrl, cn, money } from '../lib/format'
 import type { HomeBanner, Order, Product } from '../lib/types'
 import { setStatusBarOverride } from '../lib/native'
@@ -200,9 +199,6 @@ export default function Home() {
           </section>
         ) : (
           <>
-            {/* ===== New app version (Android) ===== */}
-            <UpdateBanner />
-
             {/* ===== Quick actions ===== */}
             <section className="grid grid-cols-3 gap-2 xs:gap-3">
               {[

@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { assetUrl } from '../lib/format'
 import { initBackButton } from '../lib/native'
+import UpdateBanner from './UpdateBanner'
 
 const ROOTS = ['/', '/cart', '/orders', '/profile', '/admin']
 
@@ -72,6 +73,7 @@ export default function AppShell() {
         </div>
       )}
       <main className="pb-nav"><Outlet /></main>
+      <UpdateBanner />
 
       {/* phones: bottom navigation bar */}
       <nav className="nav-bar no-print md:hidden" aria-label="main">
