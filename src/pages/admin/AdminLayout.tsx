@@ -14,6 +14,7 @@ export default function AdminLayout() {
     { to: '/admin/customers', label: t('customers') },
     { to: '/admin/support', label: t('messages') },
     { to: '/admin/challenges', label: t('challenges') },
+    { to: '/admin/payments', label: t('paymentSettings') },
     { to: '/admin/banners', label: t('ads') },
     { to: '/admin/notify', label: t('notifications') }
   ]
