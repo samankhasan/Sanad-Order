@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, ChevronLeft, ChevronRight, Gift, Info, LifeBuoy, LogOut, Palette, ReceiptText, Share2, ShieldCheck, BadgeCheck, Trophy, UserRound } from 'lucide-react'
+import { Bell, Briefcase, Building2, ChevronLeft, ChevronRight, Download, FileText, Gift, Info, LifeBuoy, Lock, LogOut, Palette, ReceiptText, Share2, ShieldCheck, BadgeCheck, Trophy, UserRound } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationsContext'
@@ -30,8 +30,13 @@ export function MenuRow({ to, onClick, icon, label, value, badge, tone }: {
   return to ? <Link to={to} className={cls}>{inner}</Link> : <button type="button" onClick={onClick} className={cls}>{inner}</button>
 }
 
-function Group({ children }: { children: ReactNode }) {
-  return <section className="card divide-y divide-[var(--border)] overflow-hidden">{children}</section>
+function Group({ children, title }: { children: ReactNode; title?: string }) {
+  return (
+    <div>
+      {title && <h2 className="mb-2 px-1 text-xs font-extrabold uppercase tracking-wide text-2">{title}</h2>}
+      <section className="card divide-y divide-[var(--border)] overflow-hidden">{children}</section>
+    </div>
+  )
 }
 
 /** "Account": the member's hub — personal info, orders, rewards, challenges, sharing, help, settings. */
@@ -87,8 +92,16 @@ export default function Account() {
 
         <Group>
           <MenuRow onClick={() => setSharing(true)} icon={<Share2 className="size-5" />} label={t('shareApp')} />
-          <MenuRow to="/support" icon={<LifeBuoy className="size-5" />} label={t('support')} />
+          <MenuRow to="/account/install" icon={<Download className="size-5" />} label={t('installApp')} />
           <MenuRow to="/account/settings" icon={<Palette className="size-5" />} label={t('settings')} />
+        </Group>
+
+        <Group title={t('helpInfo')}>
+          <MenuRow to="/support" icon={<LifeBuoy className="size-5" />} label={t('support')} />
+          <MenuRow to="/account/about-us" icon={<Building2 className="size-5" />} label={t('aboutUs')} />
+          <MenuRow to="/account/terms" icon={<FileText className="size-5" />} label={t('termsTitle')} />
+          <MenuRow to="/account/privacy" icon={<Lock className="size-5" />} label={t('privacyTitle')} />
+          <MenuRow to="/account/careers" icon={<Briefcase className="size-5" />} label={t('workWithUs')} />
           <MenuRow to="/account/settings#about" icon={<Info className="size-5" />} label={t('about')} value={<bdi dir="ltr">v{__APP_VERSION__}</bdi>} />
         </Group>
 
