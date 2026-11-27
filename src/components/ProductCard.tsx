@@ -3,6 +3,7 @@ import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
 import { money, cn } from '../lib/format'
 import { Thumb } from './ui'
+import { RatingBadge } from './Stars'
 import type { Product } from '../lib/types'
 import { haptic } from '../lib/native'
 
@@ -26,6 +27,7 @@ export default function ProductCard({ product, accent, onOpen, index = 0, rank }
           {(product.size || product.unit) && (
             <p className="mt-0.5 text-xs text-2">{[product.size, t(`unit_${product.unit}` as never) || product.unit].filter(Boolean).join(' · ')}</p>
           )}
+          <RatingBadge avg={product.rating_avg} count={product.rating_count} className="mt-1" />
         </button>
         <div className="mt-auto flex items-center justify-between gap-2 pt-2">
           <span className="text-sm font-extrabold" dir="ltr">{Number(product.price) > 0 ? money(product.price, lang) : <span className="text-xs font-semibold text-2">{t('priceOnRequest')}</span>}</span>
