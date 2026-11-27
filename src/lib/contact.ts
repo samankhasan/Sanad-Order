@@ -6,3 +6,5 @@ export const SUPPORT_PHONES = [
 
 export const whatsappLink = (e164: string, text?: string) =>
   `https://wa.me/${e164}${text ? `?text=${encodeURIComponent(text)}` : ''}`
+
+export const COMPANY_WEBSITE = 'https://www.sanadcompany.com'

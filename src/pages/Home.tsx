@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { Browser } from '@capacitor/browser'
-import { Bell, ChevronLeft, ChevronRight, Flame, LifeBuoy, MessageCircle, PackageSearch, ReceiptText, RotateCcw, Search, Sparkles, X } from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, Flame, LifeBuoy, MessageCircle, Star, PackageSearch, ReceiptText, RotateCcw, Search, Sparkles, X } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationsContext'
@@ -124,6 +124,15 @@ export default function Home() {
     setRecent((data as Order[]) ?? [])
   }, [session])
   useEffect(() => { loadRecent() }, [loadRecent])
+
+  // a recently delivered order the member has not rated yet → invite them to rate it
+  const [toRate, setToRate] = useState<Order | null>(null)
+  useEffect(() => {
+    const o = recent?.find(x => x.status === 'delivered' && Date.now() - new Date(x.updated_at).getTime() < 14 * 864e5)
+    if (!o) { setToRate(null); return }
+    supabase.from('product_reviews').select('id', { count: 'exact', head: true }).eq('order_id', o.id)
+      .then(({ count }) => setToRate(count ? null : o))
+  }, [recent])
   useEffect(() => { setStatusBarOverride('light'); return () => setStatusBarOverride(null) }, [])
   const refresh = useCallback(() => Promise.all([reload(), reloadProducts(), reloadPopular(), reloadBanners(), loadRecent()]), [reload, reloadProducts, reloadPopular, reloadBanners, loadRecent])
 
@@ -199,6 +208,18 @@ export default function Home() {
           </section>
         ) : (
           <>
+            {/* ===== Rate a delivered order ===== */}
+            {toRate && (
+              <Link to={`/orders/${toRate.id}`} className="rise card flex items-center gap-3 p-4 ring-2 ring-amber-400/40 transition active:scale-[.99]">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-amber-400 text-white shadow-md shadow-amber-400/30"><Star className="size-6" fill="currentColor" strokeWidth={0} /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-extrabold">{t('rateDeliveredTitle')} <bdi dir="ltr" className="text-2">#{toRate.order_no}</bdi></p>
+                  <p className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">{'★★★★★'} · {t('rateDeliveredCta')}</p>
+                </div>
+                <Chevron className="size-5 shrink-0 text-2" />
+              </Link>
+            )}
+
             {/* ===== Quick actions ===== */}
             <section className="grid grid-cols-3 gap-2 xs:gap-3">
               {[

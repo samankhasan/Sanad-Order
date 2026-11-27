@@ -1,5 +1,8 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Home, ShoppingBag, ReceiptText, UserRound, LayoutDashboard, WifiOff } from 'lucide-react'
+import { Globe, Home, ShoppingBag, ReceiptText, UserRound, LayoutDashboard, WifiOff } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
+import { Browser } from '@capacitor/browser'
+import { COMPANY_WEBSITE } from '../lib/contact'
 import { useEffect, useState } from 'react'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
@@ -47,7 +50,18 @@ export default function AppShell() {
     { to: '/profile', icon: UserRound, label: t('profile') }
   ]
 
-  const items = tabs.map(tab => (
+  // company website: opens outside the app (Chrome custom tab on Android, a new tab on the web)
+  const openWebsite = () => Capacitor.isNativePlatform()
+    ? Browser.open({ url: COMPANY_WEBSITE }).catch(() => { window.open(COMPANY_WEBSITE, '_blank', 'noopener') })
+    : window.open(COMPANY_WEBSITE, '_blank', 'noopener')
+  const website = (
+    <button key="website" type="button" onClick={openWebsite} className="nav-item" aria-label={`${t('website')} – sanadcompany.com`}>
+      <span className="nav-indicator"><Globe className="size-[22px]" strokeWidth={2} /></span>
+      <span className="nav-label">{t('website')}</span>
+    </button>
+  )
+
+  const links = tabs.map(tab => (
     <NavLink key={tab.to} to={tab.to} end={tab.end} replace className="nav-item">
       {({ isActive }) => (
         <>
@@ -64,6 +78,8 @@ export default function AppShell() {
       )}
     </NavLink>
   ))
+  // website sits just before "profile"
+  const items = [...links.slice(0, -1), website, links[links.length - 1]]
 
   return (
     <div className="with-rail min-h-dvh">

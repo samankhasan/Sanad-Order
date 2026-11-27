@@ -54,6 +54,8 @@ export interface Product {
   is_active: boolean
   sort_order: number
   created_at: string
+  rating_avg?: number
+  rating_count?: number
 }
 
 export interface Order {
@@ -115,4 +117,12 @@ export interface SupportMessage {
   status: 'open' | 'closed'
   created_at: string
   profiles?: Pick<Profile, 'full_name' | 'phone' | 'username' | 'avatar_url'> | null
+}
+
+export interface ProductReview {
+  rating: number
+  comment: string | null
+  created_at: string
+  reviewer: string
+  avatar_url: string | null
 }
