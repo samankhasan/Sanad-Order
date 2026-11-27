@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { AtSign, Ban, BadgeCheck, KeyRound, Lock, Mail, MapPin, Pencil, Phone, Search, ShieldCheck, Trash2, UserPlus, UserRound, Home as HomeIcon } from 'lucide-react'
+import { AtSign, Ban, BadgeCheck, Gift, KeyRound, Lock, Mail, MapPin, Pencil, Phone, Search, ShieldCheck, Trash2, UserPlus, UserRound, Home as HomeIcon } from 'lucide-react'
 import { placeLabel } from '../../lib/iraq'
 import { usePrefs } from '../../context/PrefsContext'
 import { useAuth } from '../../context/AuthContext'
@@ -10,6 +10,7 @@ import CitySelect from '../../components/CitySelect'
 import { cn, dateTime } from '../../lib/format'
 import { normalizePhone } from '../../lib/identity'
 import type { Profile, Role } from '../../lib/types'
+import MemberRewards from './MemberRewards'
 
 type Filter = 'all' | 'blocked' | 'staff'
 
@@ -158,6 +159,7 @@ export default function AdminCustomers() {
   const { session, isAdmin } = useAuth()
   const toast = useToast()
   const [creating, setCreating] = useState(false)
+  const [rewarding, setRewarding] = useState<Profile | null>(null)
   const [rows, setRows] = useState<Profile[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [q, setQ] = useState('')
@@ -260,6 +262,7 @@ export default function AdminCustomers() {
               {isAdmin && (
                 <div className="mt-2 flex flex-wrap gap-0.5 border-t border-theme pt-2">
                   <button onClick={() => setEditing(p)} className={cn(actionCls, 'text-brand')}><Pencil className="size-4" />{t('edit')}</button>
+                  <button onClick={() => setRewarding(p)} className={cn(actionCls, 'text-amber-600')}><Gift className="size-4" />{t('rewards')}</button>
                   {!self && <>
                     <button disabled={!!busy} onClick={() => resetPassword(p)} className={cn(actionCls, 'text-2')}><KeyRound className="size-4" />{t('resetPassword')}</button>
                     {p.role === 'customer' && <button disabled={!!busy} onClick={() => toggleBlock(p)} className={cn(actionCls, isBlocked ? 'text-emerald-600' : 'text-amber-600')}><Ban className="size-4" />{isBlocked ? t('unblock') : t('block')}</button>}
@@ -274,6 +277,9 @@ export default function AdminCustomers() {
           )
         })}
       </div>
+      <Sheet open={!!rewarding} onClose={() => setRewarding(null)}>
+        {rewarding && <MemberRewards member={rewarding} />}
+      </Sheet>
       <Sheet open={creating} onClose={() => setCreating(false)}>
         {creating && <CreateMember onClose={() => setCreating(false)} onSaved={load} />}
       </Sheet>

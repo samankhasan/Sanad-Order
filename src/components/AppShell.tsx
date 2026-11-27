@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Globe, Home, ShoppingBag, ReceiptText, UserRound, LayoutDashboard, WifiOff } from 'lucide-react'
+import { Globe, Home, ShoppingBag, UserRound, LayoutDashboard, WifiOff } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { Browser } from '@capacitor/browser'
 import { COMPANY_WEBSITE } from '../lib/contact'
@@ -11,7 +11,7 @@ import { assetUrl } from '../lib/format'
 import { initBackButton } from '../lib/native'
 import UpdateBanner from './UpdateBanner'
 
-const ROOTS = ['/', '/cart', '/orders', '/profile', '/admin']
+const ROOTS = ['/', '/cart', '/account', '/admin']
 
 export default function AppShell() {
   const { t } = usePrefs()
@@ -45,9 +45,8 @@ export default function AppShell() {
   const tabs = [
     { to: '/', icon: Home, label: t('home'), end: true },
     { to: '/cart', icon: ShoppingBag, label: t('cart'), badge: count },
-    { to: '/orders', icon: ReceiptText, label: t('orders') },
     ...(isStaff ? [{ to: '/admin', icon: LayoutDashboard, label: t('admin') }] : []),
-    { to: '/profile', icon: UserRound, label: t('profile') }
+    { to: '/account', icon: UserRound, label: t('profile') }
   ]
 
   // company website: opens outside the app (Chrome custom tab on Android, a new tab on the web)

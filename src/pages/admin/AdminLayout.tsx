@@ -13,6 +13,7 @@ export default function AdminLayout() {
     { to: '/admin/categories', label: t('categories') },
     { to: '/admin/customers', label: t('customers') },
     { to: '/admin/support', label: t('messages') },
+    { to: '/admin/challenges', label: t('challenges') },
     { to: '/admin/banners', label: t('ads') },
     { to: '/admin/notify', label: t('notifications') }
   ]
