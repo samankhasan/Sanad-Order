@@ -14,7 +14,11 @@ import Category from './pages/Category'
 import Cart from './pages/Cart'
 import Orders from './pages/Orders'
 import OrderDetail from './pages/OrderDetail'
-import Profile from './pages/Profile'
+import Account from './pages/account/Account'
+import PersonalInfo from './pages/account/PersonalInfo'
+import Rewards from './pages/account/Rewards'
+import ChallengesPage from './pages/account/Challenges'
+import Settings from './pages/account/Settings'
 import Notifications from './pages/Notifications'
 import Support from './pages/Support'
 import { NotificationsProvider } from './context/NotificationsContext'
@@ -30,6 +34,7 @@ const AdminNotify = lazy(() => import('./pages/admin/AdminNotify'))
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'))
 const AdminBanners = lazy(() => import('./pages/admin/AdminBanners'))
 const AdminSupport = lazy(() => import('./pages/admin/AdminSupport'))
+const AdminChallenges = lazy(() => import('./pages/admin/AdminChallenges'))
 
 function Splash() {
   return (
@@ -100,7 +105,12 @@ export default function App() {
             <Route path="cart" element={<Cart />} />
             <Route path="orders" element={<Orders />} />
             <Route path="orders/:id" element={<OrderDetail />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="account" element={<Account />} />
+            <Route path="account/info" element={<PersonalInfo />} />
+            <Route path="account/rewards" element={<Rewards />} />
+            <Route path="account/challenges" element={<ChallengesPage />} />
+            <Route path="account/settings" element={<Settings />} />
+            <Route path="profile" element={<Navigate to="/account" replace />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="support" element={<Support />} />
             <Route path="admin" element={<StaffOnly><AdminLayout /></StaffOnly>}>
@@ -111,6 +121,7 @@ export default function App() {
               <Route path="notify" element={<AdminOnly><AdminNotify /></AdminOnly>} />
               <Route path="banners" element={<AdminOnly><AdminBanners /></AdminOnly>} />
               <Route path="support" element={<AdminOnly><AdminSupport /></AdminOnly>} />
+              <Route path="challenges" element={<AdminOnly><AdminChallenges /></AdminOnly>} />
               <Route path="categories" element={<AdminOnly><AdminCategories /></AdminOnly>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

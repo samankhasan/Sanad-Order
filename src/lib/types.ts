@@ -126,3 +126,35 @@ export interface ProductReview {
   reviewer: string
   avatar_url: string | null
 }
+
+export interface Reward {
+  id: string
+  user_id: string
+  title: string
+  body: string | null
+  image_url: string | null
+  created_at: string
+}
+
+export type GoalType = 'orders_count' | 'spend_total' | 'custom'
+
+export interface Challenge {
+  id: string
+  title: string
+  description: string | null
+  image_url: string | null
+  reward_text: string | null
+  goal_type: GoalType
+  goal_value: number | null
+  starts_at: string
+  ends_at: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface MyChallenge extends Omit<Challenge, 'is_active' | 'created_at'> {
+  joined: boolean
+  progress: number
+  completed: boolean
+  participants: number
+}

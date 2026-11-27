@@ -1,30 +1,24 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { BadgeCheck, Camera, ChevronLeft, ChevronRight, LifeBuoy, Download, LogOut, Moon, Sun, MonitorSmartphone, ShieldCheck, Smartphone, Trash2, FileText } from 'lucide-react'
-import { removeAvatarFile, uploadAvatar } from '../lib/image'
-import { displayIdentity, normalizePhone } from '../lib/identity'
-import { ANDROID_APK_URL, isNativeApp } from '../lib/native'
-import CitySelect from '../components/CitySelect'
-import { usePrefs } from '../context/PrefsContext'
-import { useAuth } from '../context/AuthContext'
-import { useToast } from '../context/ToastContext'
-import { supabase } from '../lib/supabase'
-import { removeMyToken } from '../lib/push'
-import { PageHeader, Spinner } from '../components/ui'
-import { LANGS } from '../lib/i18n'
-import { assetUrl, cn } from '../lib/format'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { BadgeCheck, Camera, KeyRound, Lock, Mail, ShieldCheck, Trash2 } from 'lucide-react'
+import { removeAvatarFile, uploadAvatar } from '../../lib/image'
+import { displayIdentity, isPhoneAccount, normalizePhone } from '../../lib/identity'
+import CitySelect from '../../components/CitySelect'
+import { usePrefs } from '../../context/PrefsContext'
+import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
+import { supabase } from '../../lib/supabase'
+import { removeMyToken } from '../../lib/push'
+import { PageHeader, Spinner } from '../../components/ui'
 
-interface BIPEvent extends Event { prompt: () => Promise<void> }
-let deferredPrompt: BIPEvent | null = null
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e as BIPEvent })
-
-export default function Profile() {
-  const { t, lang, setLang, theme, setTheme, dir } = usePrefs()
+/** Account → Personal information: photo, name, username, phone, address, password, delete account. */
+export default function PersonalInfo() {
+  const { t } = usePrefs()
   const { profile, session, signOut, refreshProfile, isAdmin } = useAuth()
   const toast = useToast()
   const [f, setF] = useState({ full_name: '', username: '', phone: '', city: '', address: '' })
   const [busy, setBusy] = useState(false)
-  const [canInstall, setCanInstall] = useState(!!deferredPrompt)
+  const [pw, setPw] = useState({ a: '', b: '' })
+  const [pwBusy, setPwBusy] = useState(false)
   const photoRef = useRef<HTMLInputElement>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
 
@@ -45,11 +39,16 @@ export default function Profile() {
   useEffect(() => {
     if (profile) setF({ full_name: profile.full_name ?? '', username: profile.username ?? '', phone: profile.phone ?? '', city: profile.city ?? '', address: profile.address ?? '' })
   }, [profile])
-  useEffect(() => {
-    const h = () => setCanInstall(true)
-    window.addEventListener('beforeinstallprompt', h)
-    return () => window.removeEventListener('beforeinstallprompt', h)
-  }, [])
+  async function changePassword(e: FormEvent) {
+    e.preventDefault()
+    if (pw.a.length < 6) { toast(t('passwordShort'), 'error'); return }
+    if (pw.a !== pw.b) { toast(t('passwordsDiffer'), 'error'); return }
+    setPwBusy(true)
+    const { error } = await supabase.auth.updateUser({ password: pw.a })
+    setPwBusy(false)
+    if (error) { toast(error.message, 'error'); return }
+    setPw({ a: '', b: '' }); toast(t('passwordChanged'))
+  }
 
   async function save() {
     if (!session) return
@@ -81,7 +80,7 @@ export default function Profile() {
 
   return (
     <div>
-      <PageHeader title={t('profile')} />
+      <PageHeader back="/account" title={t('personalInfo')} />
       <div className="page-narrow px-g space-y-4">
         <section className="card flex items-center gap-4 p-5">
           <div className="relative shrink-0">
@@ -101,14 +100,6 @@ export default function Profile() {
           </div>
         </section>
 
-        <Link to="/support" className="card flex min-h-[72px] items-center gap-3 p-4 transition active:scale-[.99]">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#25D366] text-white shadow-md"><LifeBuoy className="size-5" /></span>
-          <div className="min-w-0 flex-1">
-            <p className="font-extrabold">{t('support')}</p>
-            <p className="truncate text-xs text-2">{t('supportShort')}</p>
-          </div>
-          {dir === 'rtl' ? <ChevronLeft className="size-5 text-2" /> : <ChevronRight className="size-5 text-2" />}
-        </Link>
 
         <section className="card space-y-3 p-5">
           <h2 className="font-extrabold">{t('editProfile')}</h2>
@@ -122,38 +113,27 @@ export default function Profile() {
           <button disabled={busy} onClick={save} className="btn btn-primary w-full">{busy && <Spinner />}{t('save')}</button>
         </section>
 
-        <section className="card space-y-4 p-5">
-          <div>
-            <p className="label">{t('language')}</p>
-            <div className="grid grid-cols-3 gap-2">
-              {LANGS.map(l => (
-                <button key={l.code} onClick={() => setLang(l.code)} className={cn('btn py-3 text-sm', lang === l.code ? 'btn-primary' : 'btn-ghost')}>{l.label}</button>
-              ))}
+        <section className="card space-y-3 p-5">
+          <h2 className="flex items-center gap-2 font-extrabold"><Lock className="size-5" />{t('security')}</h2>
+          {session?.user.email && !isPhoneAccount(session.user.email) && (
+            <div>
+              <p className="label">{t('signInEmail')}</p>
+              <p className="flex min-h-12 items-center gap-2 rounded-2xl surface-2 px-4 text-sm font-semibold" dir="ltr"><Mail className="size-4 text-2" />{session.user.email}</p>
             </div>
-          </div>
-          <div>
-            <p className="label">{t('theme')}</p>
-            <div className="grid grid-cols-3 gap-2">
-              {([['light', Sun], ['dark', Moon], ['system', MonitorSmartphone]] as const).map(([k, Icon]) => (
-                <button key={k} onClick={() => setTheme(k)} className={cn('btn py-3 text-sm', theme === k ? 'btn-primary' : 'btn-ghost')}><Icon className="size-4" />{t(k)}</button>
-              ))}
-            </div>
-          </div>
+          )}
+          <form onSubmit={changePassword} className="space-y-3">
+            <p className="label !mb-0">{t('changePassword')}</p>
+            <input type="password" autoComplete="new-password" minLength={6} className="field" dir="ltr" placeholder={t('newPassword')} aria-label={t('newPassword')} value={pw.a} onChange={e => setPw({ ...pw, a: e.target.value })} />
+            <input type="password" autoComplete="new-password" minLength={6} className="field" dir="ltr" placeholder={t('confirmPassword')} aria-label={t('confirmPassword')} value={pw.b} onChange={e => setPw({ ...pw, b: e.target.value })} />
+            <button disabled={pwBusy || !pw.a || !pw.b} className="btn btn-ghost w-full">{pwBusy ? <Spinner /> : <KeyRound className="size-5" />}{t('changePassword')}</button>
+          </form>
         </section>
 
-        {canInstall && (
-          <button onClick={async () => { await deferredPrompt?.prompt(); deferredPrompt = null; setCanInstall(false) }} className="btn btn-ghost w-full">
-            <Download className="size-5" />{t('install')}
-          </button>
-        )}
-        <button onClick={async () => { await removeMyToken(); await signOut() }} className="btn btn-danger w-full"><LogOut className="size-5 rtl:-scale-x-100" />{t('signOut')}</button>
-        {!isNativeApp && <a href={ANDROID_APK_URL} className="btn btn-ghost w-full"><Smartphone className="size-5 text-s-green" />{t('getAndroidApp')}</a>}
-        <a href="./privacy.html" target="_blank" rel="noreferrer" className="btn btn-ghost w-full"><FileText className="size-5" />{t('privacy')}</a>
-        <button onClick={deleteAccount} className="min-h-12 w-full text-sm font-bold text-rose-600"><Trash2 className="me-1 inline size-4" />{t('deleteAccount')}</button>
-        <div className="flex flex-col items-center gap-2 py-6 text-center">
-          <img src={assetUrl('brands/sanad-mark.png')} alt="" className="h-10" />
-          <p className="text-xs text-2">Sanad Order · v1.6.2</p>
-        </div>
+        <section className="card p-5">
+          <h2 className="mb-2 font-extrabold text-rose-600">{t('dangerZone')}</h2>
+          <p className="mb-3 text-xs leading-6 text-2">{t('deleteAccountConfirm')}</p>
+          <button onClick={deleteAccount} className="btn btn-danger w-full"><Trash2 className="size-5" />{t('deleteAccount')}</button>
+        </section>
       </div>
     </div>
   )
