@@ -4,76 +4,77 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Sanad Order — Privacy Policy</title>
-<link rel="icon" href="./favicon.png" />
+<link rel="icon" href="favicon.png" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet" />
 <style>
   :root { --bg:#f5f6fa; --card:#fff; --text:#0b1220; --muted:#5b6474; --border:#e3e6ed; color-scheme: light dark; }
   @media (prefers-color-scheme: dark) { :root { --bg:#070b14; --card:#0f1625; --text:#eef2f8; --muted:#97a3b8; --border:#212c43; } }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.75 "Noto Kufi Arabic", system-ui, "Segoe UI", sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
-  header { display:flex; align-items:center; gap:12px; margin-bottom: 8px; }
-  header img { width:48px; height:48px; object-fit:contain; background:#fff; border-radius:14px; padding:4px; }
-  .stripe { height:6px; border-radius:3px; background:linear-gradient(90deg,#e10e19,#f36f21,#ffcb05,#4fa62f,#0284d6,#0b3c7d,#7b1b6a); margin: 12px 0 24px; }
-  section { background:var(--card); border:1px solid var(--border); border-radius:20px; padding: 8px 20px 16px; margin-bottom: 16px; }
-  h1 { font-size: 24px; margin: 0; } h2 { font-size: 18px; margin: 18px 0 6px; } p, li { color: var(--muted); }
-  nav a { display:inline-block; margin: 0 8px 8px 0; padding:8px 14px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--text); text-decoration:none; font-weight:600; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.8 "Noto Kufi Arabic", system-ui, "Segoe UI", sans-serif; }
+  main { max-width: 780px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display:flex; align-items:center; gap:12px; }
+  header img { width:52px; height:52px; border-radius:14px; }
+  .stripe { height:6px; border-radius:3px; background:linear-gradient(90deg,#e10e19,#f36f21,#ffcb05,#4fa62f,#0284d6,#0b3c7d,#7b1b6a); margin: 14px 0 20px; }
+  nav { display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 16px; }
+  nav a { padding:8px 14px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--text); text-decoration:none; font-weight:700; font-size:14px; }
+  section { background:var(--card); border:1px solid var(--border); border-radius:20px; padding: 6px 22px 16px; margin-bottom: 16px; }
+  h1 { font-size: 22px; margin: 0; } .t { font-size: 19px; margin: 16px 0 6px; } h3 { font-size: 16px; margin: 18px 0 4px; }
+  p, li { color: var(--muted); } li { margin: 4px 0; } a { color: #0284d6; }
+  small { color: var(--muted); }
 </style>
 </head>
 <body>
 <main>
-  <header><img src="./brands/sanad-mark.png" alt="" /><div><h1>Sanad Order</h1><small>Sanad Company · Privacy Policy · Last updated 25 Nov 2026</small></div></header>
+  <header><img src="icons/icon-192.png" alt="" /><div><h1>Sanad Order</h1><small>Sanad Company · Privacy Policy · Last updated 2026-11-27</small></div></header>
   <div class="stripe"></div>
-  <nav><a href="#en">English</a><a href="#ku">کوردی</a><a href="#ar">العربية</a><a href="#delete">Delete account</a></nav>
+  <nav><a href="#en">English</a><a href="#ku">کوردی</a><a href="#ar">العربية</a><a href="#delete">Delete account</a><a href="terms.html">Terms &amp; Conditions</a></nav>
 
-  <section id="en">
-    <h2>What we collect</h2>
-    <ul>
-      <li>Account: your name, phone number (or e-mail), shop name and city.</li>
-      <li>Orders: the products, quantities, notes and status of the orders you place.</li>
-      <li>Notifications: a device token so we can send order updates and offers.</li>
-    </ul>
-    <h2>How we use it</h2>
-    <p>Only to process and deliver your orders, contact you about them, and send notifications you can turn off at any time. We do not sell or share your data with advertisers.</p>
-    <h2>Where it is stored</h2>
-    <p>Data is stored securely with our service providers Supabase (database &amp; login) and Google Firebase (push notifications), encrypted in transit.</p>
-    <h2>Your rights</h2>
-    <p>You can edit your profile in the app, and delete your account at any time (see below). Deleting your account permanently removes your profile, orders and device tokens.</p>
-    <h2>Contact</h2>
-    <p>Sanad Company — contact us through the app or your Sanad sales representative.</p>
+  <section id="en" dir="ltr" lang="en">
+    <h2 class="t">Privacy Policy</h2>
+    <p>Sanad Company respects your privacy. This policy explains what we collect, why, and how we protect it.</p>
+    <h3>1. What we collect</h3><ul><li>Account: name, username, phone number, e-mail, city, address and profile photo (if you add one).</li><li>Orders: products, quantities, prices, notes and status.</li><li>What you write: ratings and comments, support messages and challenge participation.</li><li>Device and usage: an anonymous device ID, device type, country and IP address (for statistics and fraud prevention), and a push-notification token.</li><li>We do not collect your precise GPS location, your contacts or bank-card details.</li></ul>
+    <h3>2. How we use it</h3><ul><li>To process and deliver your orders and contact you about them.</li><li>To send notifications (order updates, offers, rewards) — you can turn them off in your phone's settings.</li><li>To answer your messages, run rewards and challenges, and show ratings.</li><li>To improve the app with aggregate statistics and to protect accounts against fraud and misuse.</li></ul>
+    <h3>3. Sharing</h3><ul><li>We do not sell your data or share it with advertisers.</li><li>Only the providers needed to run the app hold data: Supabase (database and sign-in), Google Firebase (notifications) and GitHub (website hosting).</li><li>Ratings show only your first name and photo — never your phone number or address.</li><li>We disclose data to authorities only when the law requires it.</li></ul>
+    <h3>4. Security and retention</h3><ul><li>Data travels over encrypted connections (HTTPS) and each member can only see their own data; only authorised Sanad staff have access.</li><li>We keep your data while your account exists. Deleting your account removes your profile, orders, messages and ratings; only anonymous statistics remain.</li><li>To stop a blocked account from returning, we keep its device, phone number and e-mail, and its IP address for 30 days.</li></ul>
+    <h3>5. Your rights</h3><ul><li>You can view and edit your data in Account → Personal information, and delete your account permanently at any time.</li><li>For any other request about your data, e-mail us.</li></ul>
+    <h3>6. Children and changes</h3><ul><li>The app is intended for business customers aged 18 and over.</li><li>If we change this policy we will update the "last updated" date and tell you in the app.</li></ul>
+    <h3>Contact</h3>
+    <p>Sanad Company · <a href="mailto:app@sanadcompany.com">app@sanadcompany.com</a> · <span dir="ltr">+964 750 841 8593</span></p>
   </section>
 
   <section id="ku" dir="rtl" lang="ckb">
-    <h2>چی کۆدەکەینەوە</h2>
-    <ul>
-      <li>هەژمار: ناو، ژمارەی مۆبایل (یان ئیمەیڵ)، ناوی دوکان و شار.</li>
-      <li>داواکاری: ئەو بەرهەم، ژمارە، تێبینی و دۆخی داواکارییانەی دەیکەیت.</li>
-      <li>ئاگادارکردنەوە: کۆدی ئامێر بۆ ناردنی نوێکاری داواکاری و ئۆفەر.</li>
-    </ul>
-    <h2>بۆچی بەکاری دەهێنین</h2>
-    <p>تەنها بۆ جێبەجێکردن و گەیاندنی داواکارییەکانت و ناردنی ئاگادارکردنەوە. زانیارییەکانت نافرۆشین و نادەین بە کەس.</p>
-    <h2>مافەکانت</h2>
-    <p>دەتوانیت هەر کاتێک لە ئەپەکەدا ← پرۆفایل ← «سڕینەوەی هەژمارەکەم» هەژمارەکەت بە یەکجاری بسڕیتەوە.</p>
+    <h2 class="t">یاسای تایبەتمەندی</h2>
+    <p>کۆمپانیای ساناد ڕێز لە تایبەتمەندیت دەگرێت. ئەم سیاسەتە ڕوونی دەکاتەوە کە چ زانیارییەک کۆدەکەینەوە، بۆچی، و چۆن دەیپارێزین.</p>
+    <h3>١. چی کۆدەکەینەوە</h3><ul><li>زانیاری هەژمار: ناو، ناوی بەکارهێنەر، ژمارەی مۆبایل، ئیمەیڵ، شار، ناونیشان و وێنەی پرۆفایل (ئەگەر دایبنێیت).</li><li>داواکاری: بەرهەم، ژمارە، نرخ، تێبینی و دۆخی داواکارییەکانت.</li><li>ئەوەی خۆت دەینووسیت: هەڵسەنگاندن و تێبینی، نامەکانی هاوکاری، و بەشداری لە چالێنج.</li><li>زانیاری ئامێر و بەکارهێنان: ناسنامەیەکی بێناوی ئامێر، جۆری ئامێر، وڵات و ناونیشانی IP (بۆ ئامار و پاراستن لە فێڵ)، و کۆدی ئاگادارکردنەوە.</li><li>شوێنی وردی GPS، پەیوەندییەکانی مۆبایل و زانیاری کارتی بانکی کۆناکەینەوە.</li></ul>
+    <h3>٢. بۆچی بەکاری دەهێنین</h3><ul><li>جێبەجێکردن و گەیاندنی داواکارییەکانت و پەیوەندیکردن پێتەوە دەربارەیان.</li><li>ناردنی ئاگادارکردنەوە (نوێکاری داواکاری، ئۆفەر، خەڵات) — دەتوانیت لە ڕێکخستنی مۆبایلەکەت بیکوژێنیتەوە.</li><li>وەڵامدانەوەی نامەکانت، بەڕێوەبردنی خەڵات و چالێنج، و پیشاندانی هەڵسەنگاندنەکان.</li><li>باشترکردنی ئەپ بە ئاماری گشتی، و پاراستنی هەژمارەکان لە فێڵ و بەکارهێنانی خراپ.</li></ul>
+    <h3>٣. هاوبەشکردن</h3><ul><li>زانیارییەکانت نافرۆشین و نایدەین بە کۆمپانیای ڕیکلام.</li><li>تەنها ئەم دابینکەرانە زانیارییەکان هەڵدەگرن بۆ کارکردنی ئەپەکە: Supabase (داتابەیس و چوونەژوورەوە)، Google Firebase (ئاگادارکردنەوە)، و GitHub (هۆستی ماڵپەڕ).</li><li>لە هەڵسەنگاندنەکاندا تەنها ناوی یەکەمت و وێنەکەت پیشان دەدرێت؛ ژمارە و ناونیشانت هەرگیز.</li><li>تەنها ئەگەر یاسا داوای بکات زانیاری دەدەینە دەسەڵاتی پەیوەندیدار.</li></ul>
+    <h3>٤. پاراستن و ماوەی هەڵگرتن</h3><ul><li>زانیارییەکان بە پەیوەندیی شفرەکراو (HTTPS) دەنێردرێن، و هەر ئەندامێک تەنها دەتوانێت زانیاری خۆی ببینێت. تەنها کارمەندانی ڕێگەپێدراوی ساناد دەستیان پێی دەگات.</li><li>زانیارییەکانت هەڵدەگیرێن تا هەژمارەکەت هەیە. لە کاتی سڕینەوەی هەژمار، پرۆفایل، داواکاری، نامە و هەڵسەنگاندنەکانت دەسڕدرێنەوە؛ تەنها ئاماری بێناو دەمێنێتەوە.</li><li>بۆ ڕێگرتن لە گەڕانەوەی هەژمارێکی بلۆککراو، ئامێر، ژمارە و ئیمەیڵەکەی هەڵدەگیرێن، و IP ـەکەی بۆ ٣٠ ڕۆژ.</li></ul>
+    <h3>٥. مافەکانت</h3><ul><li>دەتوانیت لە هەژمار ← زانیاری تایبەت زانیارییەکانت ببینیت و دەستکاری بکەیت، و هەر کاتێک هەژمارەکەت بە یەکجاری بسڕیتەوە.</li><li>بۆ هەر داواکارییەکی تر دەربارەی زانیارییەکانت، ئیمەیڵمان بۆ بنێرە.</li></ul>
+    <h3>٦. منداڵان و گۆڕانکاری</h3><ul><li>ئەپەکە بۆ کڕیارانی بازرگانی و تەمەنی ١٨ ساڵ بەرەوژوورە.</li><li>ئەگەر ئەم سیاسەتە بگۆڕین، بەرواری «دوایین نوێکردنەوە» دەگۆڕین و لە ئەپەکەدا ئاگادارت دەکەینەوە.</li></ul>
+    <h3>پەیوەندی</h3>
+    <p>Sanad Company · <a href="mailto:app@sanadcompany.com">app@sanadcompany.com</a> · <span dir="ltr">+964 750 841 8593</span></p>
   </section>
 
   <section id="ar" dir="rtl" lang="ar">
-    <h2>ما الذي نجمعه</h2>
-    <ul>
-      <li>الحساب: الاسم، رقم الهاتف (أو البريد)، اسم المحل والمدينة.</li>
-      <li>الطلبات: المنتجات والكميات والملاحظات وحالة الطلب.</li>
-      <li>الإشعارات: رمز الجهاز لإرسال تحديثات الطلبات والعروض.</li>
-    </ul>
-    <h2>كيف نستخدمها</h2>
-    <p>فقط لتنفيذ طلباتك وتوصيلها وإرسال الإشعارات. لا نبيع بياناتك ولا نشاركها مع أي جهة إعلانية.</p>
-    <h2>حقوقك</h2>
-    <p>يمكنك حذف حسابك نهائياً في أي وقت من التطبيق ← الملف ← «حذف حسابي».</p>
+    <h2 class="t">سياسة الخصوصية</h2>
+    <p>تحترم شركة ساناد خصوصيتك. توضح هذه السياسة المعلومات التي نجمعها ولماذا وكيف نحميها.</p>
+    <h3>١. ما الذي نجمعه</h3><ul><li>معلومات الحساب: الاسم، اسم المستخدم، رقم الهاتف، البريد، المدينة، العنوان وصورة الملف (إن أضفتها).</li><li>الطلبات: المنتجات والكميات والأسعار والملاحظات وحالة الطلب.</li><li>ما تكتبه بنفسك: التقييمات والتعليقات، رسائل الدعم، والمشاركة في التحديات.</li><li>معلومات الجهاز والاستخدام: معرّف مجهول للجهاز، نوع الجهاز، الدولة وعنوان IP (للإحصاءات ومنع الاحتيال)، ورمز الإشعارات.</li><li>لا نجمع موقعك الدقيق (GPS) ولا جهات الاتصال ولا بيانات البطاقات المصرفية.</li></ul>
+    <h3>٢. كيف نستخدمها</h3><ul><li>تنفيذ طلباتك وتوصيلها والتواصل معك بشأنها.</li><li>إرسال الإشعارات (تحديثات الطلبات، العروض، المكافآت) — ويمكنك إيقافها من إعدادات هاتفك.</li><li>الرد على رسائلك وإدارة المكافآت والتحديات وعرض التقييمات.</li><li>تحسين التطبيق عبر إحصاءات عامة وحماية الحسابات من الاحتيال وسوء الاستخدام.</li></ul>
+    <h3>٣. المشاركة</h3><ul><li>لا نبيع بياناتك ولا نشاركها مع جهات إعلانية.</li><li>يحتفظ بالبيانات فقط مزودو الخدمة اللازمون لتشغيل التطبيق: Supabase (قاعدة البيانات وتسجيل الدخول)، Google Firebase (الإشعارات)، وGitHub (استضافة الموقع).</li><li>في التقييمات يظهر اسمك الأول وصورتك فقط، ولا يظهر رقمك أو عنوانك أبداً.</li><li>لا نقدم بيانات للجهات الرسمية إلا إذا طلب القانون ذلك.</li></ul>
+    <h3>٤. الحماية ومدة الاحتفاظ</h3><ul><li>تُنقل البيانات عبر اتصال مشفّر (HTTPS)، ولا يرى كل عضو إلا بياناته. ولا يصل إليها إلا موظفو ساناد المخولون.</li><li>نحتفظ ببياناتك ما دام حسابك قائماً. عند حذف الحساب تُحذف بيانات الملف والطلبات والرسائل والتقييمات، وتبقى إحصاءات مجهولة فقط.</li><li>لمنع عودة حساب محظور، نحتفظ بجهازه ورقمه وبريده، وبعنوان IP لمدة ٣٠ يوماً.</li></ul>
+    <h3>٥. حقوقك</h3><ul><li>يمكنك عرض بياناتك وتعديلها من حسابي ← المعلومات الشخصية، وحذف حسابك نهائياً في أي وقت.</li><li>لأي طلب آخر يخص بياناتك، راسلنا عبر البريد.</li></ul>
+    <h3>٦. الأطفال والتعديلات</h3><ul><li>التطبيق موجّه للزبائن التجاريين ولمن هم بعمر ١٨ سنة فأكثر.</li><li>عند تعديل هذه السياسة سنحدّث تاريخ «آخر تحديث» ونبلغك داخل التطبيق.</li></ul>
+    <h3>التواصل</h3>
+    <p>Sanad Company · <a href="mailto:app@sanadcompany.com">app@sanadcompany.com</a> · <span dir="ltr">+964 750 841 8593</span></p>
   </section>
 
   <section id="delete">
-    <h2>Delete your account · سڕینەوەی هەژمار · حذف الحساب</h2>
-    <p><b>In the app:</b> Profile → <i>Delete my account</i>. Your profile, order history and device tokens are deleted immediately and permanently.</p>
-    <p><b>Without the app:</b> ask Sanad Company (through your sales representative) to delete your account; it is removed within 7 days.</p>
+    <h2 class="t">Delete your account · سڕینەوەی هەژمار · حذف الحساب</h2>
+    <p dir="ltr">In the app: Account → Personal information → Delete my account. Your profile, order history and devices are removed permanently. If you cannot sign in, e-mail us.</p>
+    <p dir="rtl">لە ئەپەکەدا: هەژمار ← زانیاری تایبەت ← سڕینەوەی هەژمارەکەم. پرۆفایل، مێژووی داواکاری و ئامێرەکانت بە یەکجاری دەسڕدرێنەوە. ئەگەر ناتوانیت بچیتە ژوورەوە، ئیمەیڵمان بۆ بنێرە.</p>
+    <p dir="rtl">داخل التطبيق: حسابي ← المعلومات الشخصية ← حذف حسابي. يُحذف ملفك وسجل طلباتك وأجهزتك نهائياً. إن لم تستطع الدخول راسلنا عبر البريد.</p>
+    <p><a href="mailto:app@sanadcompany.com?subject=Delete%20my%20account">app@sanadcompany.com</a></p>
   </section>
 </main>
 </body>

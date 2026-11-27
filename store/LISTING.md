@@ -10,6 +10,7 @@ Everything Google Play Console asks for, ready to copy.
 | Contact e-mail | *(your business e-mail)* |
 | Privacy policy URL | `https://samankhasan.github.io/Sanad-Order/privacy.html` |
 | Account deletion URL | `https://samankhasan.github.io/Sanad-Order/privacy.html#delete` |
+| Terms of service URL | `https://samankhasan.github.io/Sanad-Order/terms.html` |
 | App icon (512×512) | `store/icon-512.png` |
 | Feature graphic (1024×500) | `store/feature-graphic-1024x500.png` |
 | Phone screenshots (1080×1920) | `store/screenshots/*.png` (replace with real product photos when you have them) |

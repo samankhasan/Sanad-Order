@@ -19,6 +19,10 @@ import PersonalInfo from './pages/account/PersonalInfo'
 import Rewards from './pages/account/Rewards'
 import ChallengesPage from './pages/account/Challenges'
 import Settings from './pages/account/Settings'
+import Legal from './pages/account/Legal'
+import AboutUs from './pages/account/AboutUs'
+import Careers from './pages/account/Careers'
+import InstallApp from './pages/account/InstallApp'
 import Notifications from './pages/Notifications'
 import Support from './pages/Support'
 import { NotificationsProvider } from './context/NotificationsContext'
@@ -110,6 +114,11 @@ export default function App() {
             <Route path="account/rewards" element={<Rewards />} />
             <Route path="account/challenges" element={<ChallengesPage />} />
             <Route path="account/settings" element={<Settings />} />
+            <Route path="account/about-us" element={<AboutUs />} />
+            <Route path="account/terms" element={<Legal kind="terms" />} />
+            <Route path="account/privacy" element={<Legal kind="privacy" />} />
+            <Route path="account/careers" element={<Careers />} />
+            <Route path="account/install" element={<InstallApp />} />
             <Route path="profile" element={<Navigate to="/account" replace />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="support" element={<Support />} />
