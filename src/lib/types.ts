@@ -68,6 +68,9 @@ export interface Order {
   items_count: number
   created_at: string
   updated_at: string
+  payment_method?: string
+  payment_status?: 'unpaid' | 'paid'
+  paid_at?: string | null
   profiles?: Pick<Profile, 'full_name' | 'phone' | 'shop_name' | 'city' | 'address' | 'username'> | null
 }
 
@@ -157,4 +160,14 @@ export interface MyChallenge extends Omit<Challenge, 'is_active' | 'created_at'>
   progress: number
   completed: boolean
   participants: number
+}
+
+export interface PaymentMethod {
+  code: string
+  name_ku: string
+  name_ar: string
+  name_en: string
+  logo_url: string | null
+  is_enabled: boolean
+  sort_order: number
 }

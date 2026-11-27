@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import type { Category, HomeBanner, Product, Subcategory } from './types'
+import type { Category, HomeBanner, PaymentMethod, Product, Subcategory } from './types'
 
 let categoriesCache: Category[] | null = null
 
@@ -69,4 +69,17 @@ export function useBanners(all = false) {
   }, [all])
   useEffect(() => { load() }, [load])
   return { banners: data, reload: load }
+}
+
+let paymentCache: PaymentMethod[] | null = null
+/** Payment methods (cash, FIB, Super Qi, FastPay…) with their logos and availability. */
+export function usePaymentMethods() {
+  const [data, setData] = useState<PaymentMethod[] | null>(paymentCache)
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('payment_methods').select('*').order('sort_order')
+    paymentCache = (data as PaymentMethod[]) ?? []
+    setData(paymentCache)
+  }, [])
+  useEffect(() => { load() }, [load])
+  return { methods: data, reload: load }
 }

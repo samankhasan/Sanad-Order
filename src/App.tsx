@@ -39,6 +39,7 @@ const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'))
 const AdminBanners = lazy(() => import('./pages/admin/AdminBanners'))
 const AdminSupport = lazy(() => import('./pages/admin/AdminSupport'))
 const AdminChallenges = lazy(() => import('./pages/admin/AdminChallenges'))
+const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'))
 
 function Splash() {
   return (
@@ -131,6 +132,7 @@ export default function App() {
               <Route path="banners" element={<AdminOnly><AdminBanners /></AdminOnly>} />
               <Route path="support" element={<AdminOnly><AdminSupport /></AdminOnly>} />
               <Route path="challenges" element={<AdminOnly><AdminChallenges /></AdminOnly>} />
+              <Route path="payments" element={<AdminOnly><AdminPayments /></AdminOnly>} />
               <Route path="categories" element={<AdminOnly><AdminCategories /></AdminOnly>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

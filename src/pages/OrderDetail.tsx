@@ -12,6 +12,8 @@ import { ErrorBox, PageHeader, Skeleton, Spinner, StatusBadge } from '../compone
 import { assetUrl, cn, dateTime, money } from '../lib/format'
 import { SUPPORT_PHONES } from '../lib/contact'
 import RateOrder from '../components/RateOrder'
+import PaymentLogo, { paymentName } from '../components/PaymentLogo'
+import { usePaymentMethods } from '../lib/data'
 import { ORDER_FLOW, type Order, type OrderItem, type OrderStatus, type Product } from '../lib/types'
 
 export default function OrderDetail() {
@@ -25,6 +27,7 @@ export default function OrderDetail() {
   const [items, setItems] = useState<OrderItem[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const { methods } = usePaymentMethods()
 
   const load = useCallback(async () => {
     const [o, it] = await Promise.all([
@@ -49,6 +52,13 @@ export default function OrderDetail() {
     const { error } = await supabase.from('orders').update({ status: s }).eq('id', id!)
     setBusy(null)
     if (error) toast(error.message, 'error'); else { toast(t('saved')); load(); notify({ action: 'order_status', order_id: id }) }
+  }
+
+  async function setPaid(paid: boolean) {
+    setBusy('pay')
+    const { error } = await supabase.from('orders').update({ payment_status: paid ? 'paid' : 'unpaid', paid_at: paid ? new Date().toISOString() : null }).eq('id', id!)
+    setBusy(null)
+    if (error) toast(error.message, 'error'); else { toast(t('saved')); load() }
   }
 
   async function cancel() {
@@ -173,6 +183,25 @@ export default function OrderDetail() {
             <span className="text-xl font-black" dir="ltr">{money(order.total, lang)}</span>
           </div>
         </section>
+
+        {/* payment */}
+        {(() => {
+          const pm = methods?.find(m => m.code === (order.payment_method ?? 'cash'))
+          const paid = order.payment_status === 'paid'
+          return (
+            <section className="card flex items-center gap-3 p-4">
+              <PaymentLogo method={pm ?? { code: 'cash', logo_url: null, name_en: 'Cash' }} className="size-11 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-2">{t('paymentMethod')}</p>
+                <p className="truncate text-sm font-extrabold">{paymentName(pm, lang) || t('payCashHint')}</p>
+              </div>
+              <span className={cn('chip shrink-0', paid ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300')}>{paid ? t('paid') : t('unpaid')}</span>
+              {isAdmin && (
+                <button disabled={!!busy} onClick={() => setPaid(!paid)} className="no-print btn btn-ghost min-h-10 shrink-0 px-3 text-xs">{busy === 'pay' ? <Spinner className="size-4" /> : paid ? t('markUnpaid') : t('markPaid')}</button>
+              )}
+            </section>
+          )
+        })()}
 
         {order.note && <section className="card p-4"><p className="label">{t('note')}</p><p className="whitespace-pre-line text-sm">{order.note}</p></section>}
 

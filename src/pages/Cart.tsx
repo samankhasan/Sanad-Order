@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ImageOff, Send, ShoppingBag, Trash2 } from 'lucide-react'
+import { Check, ImageOff, Lock, Send, ShoppingBag, Trash2 } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
-import { useCategories } from '../lib/data'
+import { useCategories, usePaymentMethods } from '../lib/data'
+import PaymentLogo, { paymentName } from '../components/PaymentLogo'
 import { supabase } from '../lib/supabase'
 import { notify } from '../lib/push'
 import { EmptyState, PageHeader, QtyStepper, Spinner, Thumb } from '../components/ui'
-import { money } from '../lib/format'
+import { cn, money } from '../lib/format'
 import type { Order } from '../lib/types'
 
 export default function Cart() {
@@ -18,14 +19,16 @@ export default function Cart() {
   const nav = useNavigate()
   const { categories } = useCategories()
   const [note, setNote] = useState('')
+  const { methods } = usePaymentMethods()
+  const [payment, setPayment] = useState('cash')
   const [busy, setBusy] = useState(false)
 
   async function place() {
     setBusy(true)
     const items = cart.lines.map(l => ({ product_id: l.product.id, quantity: l.quantity }))
-    const { data, error } = await supabase.rpc('place_order', { p_items: items, p_note: note })
+    const { data, error } = await supabase.rpc('place_order', { p_items: items, p_note: note, p_payment: payment })
     setBusy(false)
-    if (error) { toast(/account_blocked/.test(error.message) ? t('accountBlocked') : error.message, 'error'); return }
+    if (error) { toast(/account_blocked/.test(error.message) ? t('accountBlocked') : /payment_unavailable/.test(error.message) ? t('paymentUnavailable') : error.message, 'error'); return }
     cart.clear()
     notify({ action: 'new_order', order_id: (data as Order).id })
     toast(t('orderPlaced'))
@@ -75,6 +78,31 @@ export default function Cart() {
             </ul>
           </section>
         ))}
+        {/* payment method: cash is live; the others show their logo and "coming soon" until enabled */}
+        <section className="card p-4">
+          <p className="label flex items-center gap-1.5"><Lock className="size-3.5" />{t('paymentMethod')}</p>
+          <div role="radiogroup" aria-label={t('paymentMethod')} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {(methods ?? []).map(m => {
+              const on = payment === m.code
+              return (
+                <button key={m.code} type="button" role="radio" aria-checked={on} disabled={!m.is_enabled} onClick={() => setPayment(m.code)}
+                  className={cn('relative flex min-h-[64px] items-center gap-3 rounded-2xl border-2 p-3 text-start transition',
+                    on ? 'border-[var(--color-brand)] bg-[color-mix(in_oklab,var(--color-brand)_8%,transparent)]' : 'border-theme',
+                    !m.is_enabled && 'cursor-not-allowed opacity-60')}>
+                  <PaymentLogo method={m} className="size-11 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-extrabold leading-snug">{paymentName(m, lang)}</span>
+                    <span className="block text-[11px] font-semibold text-2">{m.is_enabled ? (m.code === 'cash' ? t('payCashHint') : t('payOnlineHint')) : t('ch_upcoming')}</span>
+                  </span>
+                  <span className={cn('grid size-6 shrink-0 place-items-center rounded-full border-2', on ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-white' : 'border-theme')}>
+                    {on && <Check className="size-3.5" strokeWidth={3} />}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
         <section className="card p-4">
           <label className="label">{t('note')}</label>
           <textarea rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder={t('notePlaceholder')} className="field resize-none" />
