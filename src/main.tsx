@@ -9,7 +9,10 @@ import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ToastProvider } from './context/ToastContext'
 import { initNative } from './lib/native'
+import ErrorBoundary from './components/ErrorBoundary'
+import { installErrorReporting } from './lib/errors'
 
+installErrorReporting()
 initNative()
 
 // Service worker only on the web (Capacitor serves files locally)
@@ -17,6 +20,7 @@ if (!('Capacitor' in window)) registerSW({ immediate: true })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <ErrorBoundary>
     <PrefsProvider>
       <ToastProvider>
         <AuthProvider>
@@ -26,5 +30,6 @@ createRoot(document.getElementById('root')!).render(
         </AuthProvider>
       </ToastProvider>
     </PrefsProvider>
+    </ErrorBoundary>
   </StrictMode>
 )

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ImageOff, ShoppingBag } from 'lucide-react'
 import { Stars } from './Stars'
 import ProductReviews from './ProductReviews'
+import StockAlertButton from './StockAlertButton'
 import { Sheet, QtyStepper } from './ui'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
@@ -51,6 +52,7 @@ export default function ProductSheet({ product, accent, onClose, focusRating }: 
           ))}
         </div>
         {product.description && <p className="whitespace-pre-line text-sm leading-relaxed text-2">{product.description}</p>}
+        {product.in_stock ? (
         <div className="flex flex-col items-stretch gap-3 pt-2 xs:flex-row xs:items-center">
           <div className="flex justify-center"><QtyStepper value={qty} onChange={setQty} min={1} /></div>
           <button
@@ -63,6 +65,7 @@ export default function ProductSheet({ product, accent, onClose, focusRating }: 
             <span className="truncate">{product.in_stock ? t('addToCart') : t('outOfStock')}</span>
           </button>
         </div>
+        ) : <div className="pt-2"><StockAlertButton productId={product.id} /></div>}
         <ProductReviews productId={product.id} focus={focusRating} />
       </div>
     </Sheet>

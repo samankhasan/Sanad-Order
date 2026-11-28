@@ -9,6 +9,8 @@
 //   { action: "new_order", order_id }                                        order owner → notifies all staff
 //   { action: "support_message", message_id }                                message author → notifies all staff
 //   { action: "support_reply", message_id }                                  staff → notifies the member
+//   { action: "back_in_stock", product_id }                                  staff → push to members who asked to be told (the in-app
+//                                                                            notification itself is written by the products trigger)
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4'
 
 const cors = {
@@ -19,6 +21,11 @@ const cors = {
 const json = (d: unknown, status = 200) =>
   new Response(JSON.stringify(d), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 
+const BACK_TEXT: Record<string, { title: string; body: string }> = {
+  ku: { title: '✅ هاتەوە: ', body: 'ئەو بەرهەمەی چاوەڕێت دەکرد ئێستا بەردەستە. پێش تەواوبوون داوای بکە!' },
+  ar: { title: '✅ عاد إلى المخزون: ', body: 'المنتج الذي كنت تنتظره متوفر الآن. اطلبه قبل نفاده!' },
+  en: { title: '✅ Back in stock: ', body: 'The product you were waiting for is available again. Order before it runs out!' }
+}
 const REPLY_TEXT: Record<string, string> = { ku: 'وەڵامی نامەکەت درایەوە 💬', ar: 'تم الرد على رسالتك 💬', en: 'We replied to your message 💬' }
 
 const STATUS_TEXT: Record<string, Record<string, string>> = {
@@ -139,6 +146,8 @@ Deno.serve(async req => {
       const { data: rows } = await q
       const r = await pushToTokens(admin, (rows ?? []).map(x => x.token), { title, body: text, image_url: n.image_url, link: n.link, notification_id: n.id })
       await admin.from('notifications').update({ push_sent: r.sent, push_failed: r.failed }).eq('id', n.id)
+      // activity log: a notification to everyone (targeted ones — rewards, replies — are logged where they are created)
+      if (!body.target_user) await admin.from('audit_log').insert({ actor: me!.id, action: 'send', entity: 'notification', entity_id: n.id, label: title })
       return json({ ok: true, notification: n, ...r })
     }
 
@@ -201,6 +210,28 @@ Deno.serve(async req => {
       const { data: rows } = await admin.from('push_tokens').select('token').eq('user_id', m.user_id)
       const r = await pushToTokens(admin, (rows ?? []).map(x => x.token), { title, body: text, link, notification_id: n?.id })
       return json({ ok: true, ...r })
+    }
+
+    if (body.action === 'back_in_stock') {
+      if (!isStaff) return json({ error: 'forbidden' }, 403)
+      const pid = String(body.product_id ?? '')
+      const { data: prod } = await admin.from('products').select('id, name, image_url, in_stock, categories(slug)').eq('id', pid).single()
+      if (!prod?.in_stock) return json({ ok: true, sent: 0 })
+      const { data: alerts } = await admin.from('stock_alerts').select('user_id, profiles(lang)').eq('product_id', pid).not('notified_at', 'is', null).is('pushed_at', null)
+      if (!alerts?.length) return json({ ok: true, sent: 0 })
+      // deno-lint-ignore no-explicit-any
+      const link = `/c/${(prod as any).categories?.slug ?? ''}?p=${prod.id}`
+      const byLang: Record<string, string[]> = {}
+      // deno-lint-ignore no-explicit-any
+      alerts.forEach((a: any) => { const l = BACK_TEXT[a.profiles?.lang] ? a.profiles.lang : 'ku'; (byLang[l] ??= []).push(a.user_id) })
+      let sent = 0, failed = 0
+      for (const [l, ids] of Object.entries(byLang)) {
+        const { data: rows } = await admin.from('push_tokens').select('token').in('user_id', ids)
+        const r = await pushToTokens(admin, (rows ?? []).map(x => x.token), { title: BACK_TEXT[l].title + prod.name, body: BACK_TEXT[l].body, image_url: prod.image_url, link })
+        sent += r.sent; failed += r.failed
+      }
+      await admin.from('stock_alerts').update({ pushed_at: new Date().toISOString() }).eq('product_id', pid).in('user_id', alerts.map(a => a.user_id))
+      return json({ ok: true, sent, failed, members: alerts.length })
     }
 
     return json({ error: 'unknown_action' }, 400)
