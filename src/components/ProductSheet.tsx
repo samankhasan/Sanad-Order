@@ -1,30 +1,21 @@
 import { useEffect, useState } from 'react'
 import { ImageOff, ShoppingBag } from 'lucide-react'
 import { Stars } from './Stars'
-import { supabase } from '../lib/supabase'
-import { dateTime } from '../lib/format'
+import ProductReviews from './ProductReviews'
 import { Sheet, QtyStepper } from './ui'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
 import { money } from '../lib/format'
-import type { Product, ProductReview } from '../lib/types'
+import type { Product } from '../lib/types'
 import { haptic } from '../lib/native'
 
-export default function ProductSheet({ product, accent, onClose }: { product: Product | null; accent?: string; onClose: () => void }) {
+export default function ProductSheet({ product, accent, onClose, focusRating }: { product: Product | null; accent?: string; onClose: () => void; focusRating?: boolean }) {
   const { t, lang } = usePrefs()
   const cart = useCart()
   const toast = useToast()
   const [qty, setQty] = useState(1)
   useEffect(() => { setQty(1) }, [product?.id])
-  const [reviews, setReviews] = useState<ProductReview[] | null>(null)
-  useEffect(() => {
-    setReviews(null)
-    if (!product?.id || !product.rating_count) return
-    let live = true
-    supabase.rpc('product_reviews_list', { p_product: product.id, p_limit: 20 }).then(({ data }) => { if (live) setReviews((data as ProductReview[]) ?? []) })
-    return () => { live = false }
-  }, [product?.id, product?.rating_count])
   if (!product) return null
   return (
     <Sheet open={!!product} onClose={onClose}>
@@ -60,33 +51,6 @@ export default function ProductSheet({ product, accent, onClose }: { product: Pr
           ))}
         </div>
         {product.description && <p className="whitespace-pre-line text-sm leading-relaxed text-2">{product.description}</p>}
-        {!!product.rating_count && (
-          <section id="reviews" className="space-y-3 border-t border-theme pt-4">
-            <div className="flex items-center gap-4 rounded-2xl surface-2 p-4">
-              <div className="text-center">
-                <p className="text-4xl font-black leading-none" dir="ltr">{Number(product.rating_avg).toFixed(1)}</p>
-                <Stars value={Number(product.rating_avg)} className="mt-1.5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-extrabold">{t('customerRatings')}</p>
-                <p className="text-xs text-2">{product.rating_count} {t('ratings')}</p>
-              </div>
-            </div>
-            {reviews?.filter(r => r.comment).map((r, i) => (
-              <article key={i} className="flex gap-3">
-                <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full surface-2 text-xs font-black">
-                  {r.avatar_url ? <img src={r.avatar_url} alt="" className="size-full object-cover" /> : r.reviewer.slice(0, 1)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 text-xs">
-                    <b>{r.reviewer}</b><Stars value={r.rating} size="size-3" /><span className="text-2">{dateTime(r.created_at, lang)}</span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-line text-sm leading-6">{r.comment}</p>
-                </div>
-              </article>
-            ))}
-          </section>
-        )}
         <div className="flex flex-col items-stretch gap-3 pt-2 xs:flex-row xs:items-center">
           <div className="flex justify-center"><QtyStepper value={qty} onChange={setQty} min={1} /></div>
           <button
@@ -99,6 +63,7 @@ export default function ProductSheet({ product, accent, onClose }: { product: Pr
             <span className="truncate">{product.in_stock ? t('addToCart') : t('outOfStock')}</span>
           </button>
         </div>
+        <ProductReviews productId={product.id} focus={focusRating} />
       </div>
     </Sheet>
   )

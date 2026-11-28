@@ -121,7 +121,7 @@ export default function Category() {
           </Link>
         </div>
       )}
-      <ProductSheet product={open} accent={accent} onClose={() => setOpen(null)} />
+      <ProductSheet product={open} accent={accent} onClose={() => { setOpen(null); reload() }} />
     </PullToRefresh>
   )
 }

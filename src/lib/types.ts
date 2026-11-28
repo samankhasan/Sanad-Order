@@ -124,12 +124,17 @@ export interface SupportMessage {
 }
 
 export interface ProductReview {
+  id: string
   rating: number
   comment: string | null
   created_at: string
   reviewer: string
   avatar_url: string | null
+  verified: boolean
+  mine: boolean
 }
+
+export interface RatingSummary { avg: number; total: number; s1: number; s2: number; s3: number; s4: number; s5: number }
 
 export interface Reward {
   id: string
