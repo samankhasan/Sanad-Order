@@ -12,6 +12,7 @@ import { ErrorBox, PageHeader, Skeleton, Spinner, StatusBadge } from '../compone
 import { assetUrl, cn, dateTime, money } from '../lib/format'
 import { SUPPORT_PHONES } from '../lib/contact'
 import RateOrder from '../components/RateOrder'
+import DeliveryCard from '../components/address/DeliveryCard'
 import PaymentLogo, { paymentName } from '../components/PaymentLogo'
 import { usePaymentMethods } from '../lib/data'
 import { ORDER_FLOW, type Order, type OrderItem, type OrderStatus, type Product } from '../lib/types'
@@ -19,7 +20,8 @@ import { ORDER_FLOW, type Order, type OrderItem, type OrderStatus, type Product 
 export default function OrderDetail() {
   const { id } = useParams()
   const { t, lang } = usePrefs()
-  const { isAdmin, session } = useAuth()
+  // staff = admin or operator: both handle orders (status, payment, customer contact)
+  const { isStaff: isAdmin, session } = useAuth()
   const cart = useCart()
   const toast = useToast()
   const nav = useNavigate()
@@ -126,7 +128,9 @@ export default function OrderDetail() {
           <div className="mt-3 flex flex-wrap gap-x-8 gap-y-1 text-sm">
             <p><b>{t('customer')}:</b> {order.profiles?.full_name || '—'}</p>
             {order.profiles?.phone && <p dir="ltr"><b>{t('phone')}:</b> +{order.profiles.phone}</p>}
-            {(order.profiles?.city || order.profiles?.address) && <p><b>{t('address')}:</b> {[placeLabel(order.profiles?.city, lang), order.profiles?.address].filter(Boolean).join(' — ')}</p>}
+            {order.delivery
+              ? <p><b>{t('address')}:</b> {[order.delivery.label, placeLabel(order.delivery.city, lang), order.delivery.details].filter(Boolean).join(' — ')}</p>
+              : (order.profiles?.city || order.profiles?.address) && <p><b>{t('address')}:</b> {[placeLabel(order.profiles?.city, lang), order.profiles?.address].filter(Boolean).join(' — ')}</p>}
           </div>
           <div className="mt-3 h-1.5 sanad-stripe [print-color-adjust:exact] [-webkit-print-color-adjust:exact]" />
         </div>
@@ -183,6 +187,8 @@ export default function OrderDetail() {
             <span className="text-xl font-black" dir="ltr">{money(order.total, lang)}</span>
           </div>
         </section>
+
+        {order.delivery && <DeliveryCard d={order.delivery} />}
 
         {/* payment */}
         {(() => {

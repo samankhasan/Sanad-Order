@@ -23,6 +23,7 @@ import Legal from './pages/account/Legal'
 import AboutUs from './pages/account/AboutUs'
 import Careers from './pages/account/Careers'
 import InstallApp from './pages/account/InstallApp'
+import Addresses from './pages/account/Addresses'
 import Notifications from './pages/Notifications'
 import Support from './pages/Support'
 import { NotificationsProvider } from './context/NotificationsContext'
@@ -82,7 +83,7 @@ function Blocked() {
 function AdminOnly({ children }: { children: ReactNode }) {
   const { isAdmin, isStaff, profile } = useAuth()
   if (!profile) return <Splash />
-  return isAdmin ? <>{children}</> : <Navigate to={isStaff ? '/admin/products' : '/'} replace />
+  return isAdmin ? <>{children}</> : <Navigate to={isStaff ? '/admin/orders' : '/'} replace />
 }
 
 function StaffOnly({ children }: { children: ReactNode }) {
@@ -120,17 +121,18 @@ export default function App() {
             <Route path="account/privacy" element={<Legal kind="privacy" />} />
             <Route path="account/careers" element={<Careers />} />
             <Route path="account/install" element={<InstallApp />} />
+            <Route path="account/addresses" element={<Addresses />} />
             <Route path="profile" element={<Navigate to="/account" replace />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="support" element={<Support />} />
             <Route path="admin" element={<StaffOnly><AdminLayout /></StaffOnly>}>
               <Route index element={<AdminOnly><AdminDashboard /></AdminOnly>} />
-              <Route path="orders" element={<AdminOnly><AdminOrders /></AdminOnly>} />
+              <Route path="orders" element={<AdminOrders />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="notify" element={<AdminOnly><AdminNotify /></AdminOnly>} />
               <Route path="banners" element={<AdminOnly><AdminBanners /></AdminOnly>} />
-              <Route path="support" element={<AdminOnly><AdminSupport /></AdminOnly>} />
+              <Route path="support" element={<AdminSupport />} />
               <Route path="challenges" element={<AdminOnly><AdminChallenges /></AdminOnly>} />
               <Route path="payments" element={<AdminOnly><AdminPayments /></AdminOnly>} />
               <Route path="categories" element={<AdminOnly><AdminCategories /></AdminOnly>} />

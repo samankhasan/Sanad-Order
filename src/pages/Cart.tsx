@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Check, ImageOff, Lock, Send, ShoppingBag, Trash2 } from 'lucide-react'
+import { Check, ImageOff, Lock, MapPin, Plus, Send, ShoppingBag, Trash2 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import AddressForm from '../components/address/AddressForm'
+import { AddressIcon, AddressSummary } from '../components/address/AddressCard'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
 import { useToast } from '../context/ToastContext'
-import { useCategories, usePaymentMethods } from '../lib/data'
+import { useAddresses, useCategories, usePaymentMethods } from '../lib/data'
 import PaymentLogo, { paymentName } from '../components/PaymentLogo'
 import { supabase } from '../lib/supabase'
 import { notify } from '../lib/push'
-import { EmptyState, PageHeader, QtyStepper, Spinner, Thumb } from '../components/ui'
+import { EmptyState, PageHeader, QtyStepper, Sheet, Spinner, Thumb } from '../components/ui'
 import { cn, money } from '../lib/format'
 import type { Order } from '../lib/types'
 
@@ -21,14 +24,21 @@ export default function Cart() {
   const [note, setNote] = useState('')
   const { methods } = usePaymentMethods()
   const [payment, setPayment] = useState('cash')
+  const { session } = useAuth()
+  const { addresses, reload: reloadAddresses } = useAddresses(session?.user.id)
+  const [addressId, setAddressId] = useState<string | null>(null)
+  const [addingAddress, setAddingAddress] = useState(false)
+  // pick the default (or newest) saved location automatically
+  const selectedAddress = addresses?.find(a => a.id === addressId) ?? addresses?.[0] ?? null
   const [busy, setBusy] = useState(false)
 
   async function place() {
+    if (!selectedAddress) { setAddingAddress(true); return }
     setBusy(true)
     const items = cart.lines.map(l => ({ product_id: l.product.id, quantity: l.quantity }))
-    const { data, error } = await supabase.rpc('place_order', { p_items: items, p_note: note, p_payment: payment })
+    const { data, error } = await supabase.rpc('place_order', { p_items: items, p_note: note, p_payment: payment, p_address: selectedAddress.id })
     setBusy(false)
-    if (error) { toast(/account_blocked/.test(error.message) ? t('accountBlocked') : /payment_unavailable/.test(error.message) ? t('paymentUnavailable') : error.message, 'error'); return }
+    if (error) { toast(/account_blocked/.test(error.message) ? t('accountBlocked') : /payment_unavailable/.test(error.message) ? t('paymentUnavailable') : /address_not_found/.test(error.message) ? t('addDeliveryLocation') : error.message, 'error'); return }
     cart.clear()
     notify({ action: 'new_order', order_id: (data as Order).id })
     toast(t('orderPlaced'))
@@ -78,6 +88,34 @@ export default function Cart() {
             </ul>
           </section>
         ))}
+        {/* delivery location */}
+        <section className="card p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="label !mb-0 flex items-center gap-1.5"><MapPin className="size-3.5" />{t('deliveryLocation')}</p>
+            {!!addresses?.length && <button type="button" onClick={() => setAddingAddress(true)} className="flex min-h-10 items-center gap-1 text-xs font-bold text-brand"><Plus className="size-4" />{t('newAddress')}</button>}
+          </div>
+          {addresses && addresses.length === 0 && (
+            <button type="button" onClick={() => setAddingAddress(true)} className="flex min-h-[72px] w-full items-center gap-3 rounded-2xl border-2 border-dashed border-[var(--color-brand)] p-3 text-start text-brand">
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[color-mix(in_oklab,var(--color-brand)_12%,transparent)]"><MapPin className="size-5" /></span>
+              <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold">{t('addDeliveryLocation')}</span><span className="block text-xs text-2">{t('addDeliveryLocationHint')}</span></span>
+              <Plus className="size-5" />
+            </button>
+          )}
+          <div role="radiogroup" aria-label={t('deliveryLocation')} className="space-y-2">
+            {addresses?.map(a => {
+              const on = selectedAddress?.id === a.id
+              return (
+                <button key={a.id} type="button" role="radio" aria-checked={on} onClick={() => setAddressId(a.id)}
+                  className={cn('flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-start transition', on ? 'border-[var(--color-brand)] bg-[color-mix(in_oklab,var(--color-brand)_8%,transparent)]' : 'border-theme')}>
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl surface-2"><AddressIcon label={a.label} className="size-5" /></span>
+                  <AddressSummary a={a} />
+                  <span className={cn('grid size-6 shrink-0 place-items-center rounded-full border-2', on ? 'border-[var(--color-brand)] bg-[var(--color-brand)] text-white' : 'border-theme')}>{on && <Check className="size-3.5" strokeWidth={3} />}</span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
         {/* payment method: cash is live; the others show their logo and "coming soon" until enabled */}
         <section className="card p-4">
           <p className="label flex items-center gap-1.5"><Lock className="size-3.5" />{t('paymentMethod')}</p>
@@ -115,11 +153,14 @@ export default function Cart() {
             <span className="text-sm font-semibold text-2">{t('total')}</span>
             <span className="text-xl font-black" dir="ltr">{money(cart.total, lang)}</span>
           </div>
-          <button disabled={busy} onClick={place} className="btn btn-primary w-full py-4 text-base">
+          <button disabled={busy || !addresses} onClick={place} className="btn btn-primary w-full py-4 text-base">
             {busy ? <Spinner /> : <Send className="size-5 rtl:-scale-x-100" />} {t('placeOrder')}
           </button>
         </div>
       </div>
+      <Sheet open={addingAddress} onClose={() => setAddingAddress(false)}>
+        {addingAddress && <AddressForm onClose={() => setAddingAddress(false)} onSaved={a => { setAddressId(a.id); reloadAddresses() }} />}
+      </Sheet>
     </div>
   )
 }

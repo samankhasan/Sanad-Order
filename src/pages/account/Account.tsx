@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, Briefcase, Building2, ChevronLeft, ChevronRight, Download, FileText, Gift, Info, LifeBuoy, Lock, LogOut, Palette, ReceiptText, Share2, ShieldCheck, BadgeCheck, Trophy, UserRound } from 'lucide-react'
+import { Bell, Briefcase, Building2, MapPin, ChevronLeft, ChevronRight, Download, FileText, Gift, Info, LifeBuoy, Lock, LogOut, Palette, ReceiptText, Share2, ShieldCheck, BadgeCheck, Trophy, UserRound } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationsContext'
@@ -84,6 +84,7 @@ export default function Account() {
 
         <Group>
           <MenuRow to="/account/info" icon={<UserRound className="size-5" />} label={t('personalInfo')} />
+          <MenuRow to="/account/addresses" icon={<MapPin className="size-5" />} label={t('myAddresses')} />
           <MenuRow to="/orders" icon={<ReceiptText className="size-5" />} label={t('yourOrders')} value={counts.orders ? num(counts.orders) : undefined} />
           <MenuRow to="/account/rewards" icon={<Gift className="size-5" />} label={t('rewards')} value={counts.rewards ? num(counts.rewards) : undefined} badge={counts.newRewards} />
           <MenuRow to="/account/challenges" icon={<Trophy className="size-5" />} label={t('challenges')} value={counts.challenges ? `${num(counts.challenges)} ${t('ch_active')}` : undefined} />
