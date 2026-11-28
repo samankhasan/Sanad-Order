@@ -1,25 +1,17 @@
-import { useEffect, useState } from 'react'
-import { Download, FileText, MonitorSmartphone, Moon, Smartphone, Sun } from 'lucide-react'
+import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, Download, FileText, Monitor, MonitorSmartphone, Moon, Smartphone, Sun } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
-import { ANDROID_APK_URL, isNativeApp } from '../../lib/native'
 import { PageHeader } from '../../components/ui'
 import { LANGS } from '../../lib/i18n'
 import { assetUrl, cn } from '../../lib/format'
 import { COMPANY_WEBSITE } from '../../lib/contact'
 
-interface BIPEvent extends Event { prompt: () => Promise<void> }
-let deferredPrompt: BIPEvent | null = null
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e as BIPEvent })
-
 /** Account → Language & appearance, plus "About the app". */
 export default function Settings() {
-  const { t, lang, setLang, theme, setTheme } = usePrefs()
-  const [canInstall, setCanInstall] = useState(!!deferredPrompt)
+  const { t, lang, setLang, theme, setTheme, dir } = usePrefs()
   useEffect(() => {
-    const h = () => setCanInstall(true)
-    window.addEventListener('beforeinstallprompt', h)
     if (window.location.hash.includes('#about')) document.getElementById('about')?.scrollIntoView()
-    return () => window.removeEventListener('beforeinstallprompt', h)
   }, [])
 
   return (
@@ -45,12 +37,15 @@ export default function Settings() {
           </div>
         </section>
 
-        {canInstall && (
-          <button onClick={async () => { await deferredPrompt?.prompt(); deferredPrompt = null; setCanInstall(false) }} className="btn btn-ghost w-full">
-            <Download className="size-5" />{t('install')}
-          </button>
-        )}
-        {!isNativeApp && <a href={ANDROID_APK_URL} className="btn btn-ghost w-full"><Smartphone className="size-5 text-s-green" />{t('getAndroidApp')}</a>}
+        {/* one place for every platform: Android, computer, iPhone */}
+        <Link to="/account/install" className="card flex min-h-[72px] items-center gap-3 p-4 transition active:scale-[.99]">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--color-brand)] text-white shadow-md"><Download className="size-5" /></span>
+          <div className="min-w-0 flex-1">
+            <p className="font-extrabold">{t('installApp')}</p>
+            <p className="flex items-center gap-1.5 text-xs text-2"><Smartphone className="size-3.5" />Android · <Monitor className="size-3.5" />{t('desktopTitle')} · iPhone</p>
+          </div>
+          {dir === 'rtl' ? <ChevronLeft className="size-5 text-2" /> : <ChevronRight className="size-5 text-2" />}
+        </Link>
 
         <section id="about" className="card flex flex-col items-center gap-2 p-6 text-center">
           <img src={assetUrl('icons/icon-192.png')} alt="" className="size-16 rounded-[18px] shadow" />
