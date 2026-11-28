@@ -19,6 +19,7 @@ import PersonalInfo from './pages/account/PersonalInfo'
 import Rewards from './pages/account/Rewards'
 import ChallengesPage from './pages/account/Challenges'
 import Settings from './pages/account/Settings'
+import AboutApp from './pages/account/AboutApp'
 import Legal from './pages/account/Legal'
 import AboutUs from './pages/account/AboutUs'
 import Careers from './pages/account/Careers'
@@ -116,6 +117,7 @@ export default function App() {
             <Route path="account/rewards" element={<Rewards />} />
             <Route path="account/challenges" element={<ChallengesPage />} />
             <Route path="account/settings" element={<Settings />} />
+            <Route path="account/about" element={<AboutApp />} />
             <Route path="account/about-us" element={<AboutUs />} />
             <Route path="account/terms" element={<Legal kind="terms" />} />
             <Route path="account/privacy" element={<Legal kind="privacy" />} />
