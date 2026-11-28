@@ -11,7 +11,6 @@ import { notify } from '../lib/push'
 import { ErrorBox, PageHeader, Skeleton, Spinner, StatusBadge } from '../components/ui'
 import { assetUrl, cn, dateTime, money } from '../lib/format'
 import { SUPPORT_PHONES } from '../lib/contact'
-import RateOrder from '../components/RateOrder'
 import DeliveryCard from '../components/address/DeliveryCard'
 import PaymentLogo, { paymentName } from '../components/PaymentLogo'
 import { usePaymentMethods } from '../lib/data'
@@ -212,7 +211,6 @@ export default function OrderDetail() {
         {order.note && <section className="card p-4"><p className="label">{t('note')}</p><p className="whitespace-pre-line text-sm">{order.note}</p></section>}
 
         {/* delivered: the customer rates the products */}
-        {order.status === 'delivered' && order.user_id === session?.user.id && items && <RateOrder orderId={order.id} items={items} />}
 
         {/* printed invoice: faint logo watermark behind the page + contact note as the page footer (repeats on every page) */}
         <img src={assetUrl('brands/sanad-mark.png')} alt="" aria-hidden="true" className="invoice-watermark hidden print:block" />

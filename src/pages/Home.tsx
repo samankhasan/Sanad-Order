@@ -125,14 +125,24 @@ export default function Home() {
   }, [session])
   useEffect(() => { loadRecent() }, [loadRecent])
 
-  // a recently delivered order the member has not rated yet → invite them to rate it
-  const [toRate, setToRate] = useState<Order | null>(null)
+  // a product from a recently delivered order that the member has not rated yet → invite them to rate it
+  const [toRate, setToRate] = useState<string | null>(null)
+  const [rateFocus, setRateFocus] = useState(false)
   useEffect(() => {
     const o = recent?.find(x => x.status === 'delivered' && Date.now() - new Date(x.updated_at).getTime() < 14 * 864e5)
-    if (!o) { setToRate(null); return }
-    supabase.from('product_reviews').select('id', { count: 'exact', head: true }).eq('order_id', o.id)
-      .then(({ count }) => setToRate(count ? null : o))
-  }, [recent])
+    if (!o || !session) { setToRate(null); return }
+    let live = true
+    ;(async () => {
+      const { data: items } = await supabase.from('order_items').select('product_id').eq('order_id', o.id)
+      const ids = [...new Set(((items as { product_id: string | null }[]) ?? []).map(i => i.product_id).filter(Boolean))] as string[]
+      if (!ids.length) { if (live) setToRate(null); return }
+      const { data: done } = await supabase.from('product_reviews').select('product_id').eq('user_id', session.user.id).in('product_id', ids)
+      const rated = new Set(((done as { product_id: string }[]) ?? []).map(r => r.product_id))
+      if (live) setToRate(ids.find(id => !rated.has(id)) ?? null)
+    })()
+    return () => { live = false }
+  }, [recent, session])
+  const rateProduct = useMemo(() => products?.find(p => p.id === toRate) ?? null, [products, toRate])
   useEffect(() => { setStatusBarOverride('light'); return () => setStatusBarOverride(null) }, [])
   const refresh = useCallback(() => Promise.all([reload(), reloadProducts(), reloadPopular(), reloadBanners(), loadRecent()]), [reload, reloadProducts, reloadPopular, reloadBanners, loadRecent])
 
@@ -209,15 +219,18 @@ export default function Home() {
         ) : (
           <>
             {/* ===== Rate a delivered order ===== */}
-            {toRate && (
-              <Link to={`/orders/${toRate.id}`} className="rise card flex items-center gap-3 p-4 ring-2 ring-amber-400/40 transition active:scale-[.99]">
-                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-amber-400 text-white shadow-md shadow-amber-400/30"><Star className="size-6" fill="currentColor" strokeWidth={0} /></span>
+            {rateProduct && (
+              <button type="button" onClick={() => { setRateFocus(true); setOpen(rateProduct) }} className="rise card flex w-full items-center gap-3 p-3 text-start ring-2 ring-amber-400/40 transition active:scale-[.99]">
+                <span className="relative grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white">
+                  {rateProduct.image_url ? <img src={rateProduct.image_url} alt="" className="size-full object-contain p-1" /> : <Star className="size-6 text-amber-400" fill="currentColor" strokeWidth={0} />}
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-extrabold">{t('rateDeliveredTitle')} <bdi dir="ltr" className="text-2">#{toRate.order_no}</bdi></p>
-                  <p className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">{'★★★★★'} · {t('rateDeliveredCta')}</p>
+                  <p className="truncate text-xs font-bold text-2">{t('rateDeliveredTitle')}</p>
+                  <p className="truncate font-extrabold">{rateProduct.name}</p>
+                  <p className="flex min-w-0 items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400"><span dir="ltr" className="shrink-0">★★★★★</span><span className="truncate">{t('howWasProduct')}</span></p>
                 </div>
                 <Chevron className="size-5 shrink-0 text-2" />
-              </Link>
+              </button>
             )}
 
             {/* ===== Quick actions ===== */}
@@ -307,7 +320,7 @@ export default function Home() {
           </>
         )}
       </div>
-      <ProductSheet product={open} accent={open ? accentOf(open.category_id) : undefined} onClose={() => setOpen(null)} />
+      <ProductSheet product={open} accent={open ? accentOf(open.category_id) : undefined} focusRating={rateFocus} onClose={() => { setOpen(null); setRateFocus(false); if (rateFocus) { loadRecent(); reloadProducts() } }} />
     </PullToRefresh>
   )
 }
