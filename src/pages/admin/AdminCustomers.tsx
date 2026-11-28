@@ -11,6 +11,7 @@ import { cn, dateTime } from '../../lib/format'
 import { normalizePhone } from '../../lib/identity'
 import type { Profile, Role } from '../../lib/types'
 import MemberRewards from './MemberRewards'
+import MemberStats from './MemberStats'
 
 type Filter = 'all' | 'blocked' | 'staff'
 
@@ -164,6 +165,8 @@ export default function AdminCustomers() {
   const [error, setError] = useState<string | null>(null)
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
+  const [sort, setSort] = useState<'az' | 'new'>('az')
+  const [highlight, setHighlight] = useState<string | null>(null)
   const [editing, setEditing] = useState<Profile | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -209,7 +212,11 @@ export default function AdminCustomers() {
     return (rows ?? [])
       .filter(p => filter === 'all' || (filter === 'blocked' ? !!p.blocked_at : p.role !== 'customer'))
       .filter(p => !s || [p.full_name, p.username, p.phone, p.city, p.address, placeLabel(p.city, lang)].some(v => v?.toLowerCase().includes(s)))
-  }, [rows, q, filter, lang])
+      .sort(sort === 'az'
+        // A → Z by name (Kurdish/Arabic letters sorted in their own alphabet, Latin A–Z)
+        ? (a, b) => (a.full_name || a.username || '').trim().localeCompare((b.full_name || b.username || '').trim(), [lang === 'ku' ? 'ckb' : lang, 'ar', 'en'], { sensitivity: 'base', numeric: true })
+        : (a, b) => b.created_at.localeCompare(a.created_at))
+  }, [rows, q, filter, lang, sort])
 
   const actionCls = 'flex min-h-11 items-center gap-1.5 rounded-xl px-2.5 text-xs font-bold active:bg-[var(--surface-2)] disabled:opacity-40'
 
@@ -222,7 +229,13 @@ export default function AdminCustomers() {
         </div>
         <button onClick={() => setCreating(true)} className="btn btn-primary shrink-0"><UserPlus className="size-5" /><span className="hidden sm:inline">{t('addMember')}</span></button>
       </div>
-      <div className="no-scrollbar flex gap-2 overflow-x-auto">
+      {rows && <MemberStats rows={rows} onOpen={p => { setQ(''); setFilter('all'); setHighlight(p.id); setTimeout(() => document.getElementById(`m-${p.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50) }} />}
+      <div className="no-scrollbar flex items-center gap-2 overflow-x-auto">
+        <div className="flex shrink-0 gap-1 rounded-2xl surface-2 p-1">
+          {([['az', 'A–Z'], ['new', t('sortNewest')]] as const).map(([k, label]) => (
+            <button key={k} onClick={() => setSort(k)} className={cn('min-h-9 rounded-xl px-3 text-xs font-bold transition', sort === k ? 'surface shadow' : 'text-2')}>{label}</button>
+          ))}
+        </div>
         {([['all', t('allMembers')], ['blocked', t('blocked')], ['staff', t('staff')]] as [Filter, string][]).map(([k, label]) => (
           <button key={k} onClick={() => setFilter(k)} className={cn('filter-chip', filter === k && '!border-transparent !bg-[var(--primary)] !text-[var(--on-primary)]')}>
             {label} <span className="opacity-70" dir="ltr">{counts[k]}</span>
@@ -232,12 +245,13 @@ export default function AdminCustomers() {
       {error && <ErrorBox message={error} onRetry={load} />}
       {!rows && <Skeleton className="h-96 rounded-3xl" />}
       <div className="grid gap-3 sm:grid-cols-2">
-        {list.map(p => {
+        {list.map((p, idx) => {
           const self = p.id === session?.user.id
           const isBlocked = !!p.blocked_at
           return (
-            <div key={p.id} className={cn('card p-4', isBlocked && 'ring-2 ring-rose-500/40')}>
+            <div key={p.id} id={`m-${p.id}`} className={cn('card p-4 transition', isBlocked && 'ring-2 ring-rose-500/40', highlight === p.id && 'ring-2 ring-[var(--color-brand)]')}>
               <div className="flex items-start gap-3">
+                <span className="mt-3 w-7 shrink-0 text-center text-xs font-black text-2" dir="ltr">{idx + 1}</span>
                 <div className={cn('grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl text-lg font-black', isBlocked ? 'bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400' : 'surface-2')}>
                   {isBlocked ? <Ban className="size-6" /> : p.avatar_url ? <img src={p.avatar_url} alt="" className="size-full object-cover" /> : (p.full_name || '?').slice(0, 1).toUpperCase()}
                 </div>
