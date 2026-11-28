@@ -69,6 +69,7 @@ export interface Order {
   created_at: string
   updated_at: string
   payment_method?: string
+  delivery?: DeliverySnapshot | null
   payment_status?: 'unpaid' | 'paid'
   paid_at?: string | null
   profiles?: Pick<Profile, 'full_name' | 'phone' | 'shop_name' | 'city' | 'address' | 'username'> | null
@@ -170,4 +171,29 @@ export interface PaymentMethod {
   logo_url: string | null
   is_enabled: boolean
   sort_order: number
+}
+
+export interface Address {
+  id: string
+  user_id: string
+  label: string
+  contact_name: string
+  phone: string
+  city: string | null
+  details: string | null
+  lat: number | null
+  lng: number | null
+  is_default: boolean
+  created_at: string
+}
+
+/** Copy of the address stored on an order */
+export interface DeliverySnapshot {
+  label: string
+  name: string
+  phone: string
+  city: string | null
+  details: string | null
+  lat: number | null
+  lng: number | null
 }

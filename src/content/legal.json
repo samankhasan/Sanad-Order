@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-27",
+  "updated": "2026-11-28",
   "email": "app@sanadcompany.com",
   "phone": "+964 750 841 8593",
   "terms": {
@@ -292,27 +292,30 @@
         "p": {
           "ku": [
             "زانیاری هەژمار: ناو، ناوی بەکارهێنەر، ژمارەی مۆبایل، ئیمەیڵ، شار، ناونیشان و وێنەی پرۆفایل (ئەگەر دایبنێیت).",
+            "شوێنەکانی گەیاندن: ناوی شوێن (بۆ نموونە دوکان یان ماڵ)، ناو و ژمارەی وەرگر، شار، نزیکترین شوێن و خاڵی نەخشە (GPS) کە خۆت پاشەکەوتی دەکەیت.",
             "داواکاری: بەرهەم، ژمارە، نرخ، تێبینی و دۆخی داواکارییەکانت.",
             "زانیاری پارەدان: شێوازی پارەدان، بڕ، دۆخی پارەدان و ژمارەی مامەڵە کە دابینکەری پارەدان (FIB، Super Qi، FastPay) بۆمانی دەنێرێت. هەرگیز ژمارەی کارت، وشەی نهێنی یان PIN وەرناگرین.",
             "ئەوەی خۆت دەینووسیت: هەڵسەنگاندن و تێبینی، نامەکانی هاوکاری، و بەشداری لە چالێنج.",
             "زانیاری ئامێر و بەکارهێنان: ناسنامەیەکی بێناوی ئامێر، جۆری ئامێر، وڵات و ناونیشانی IP (بۆ ئامار و پاراستن لە فێڵ)، و کۆدی ئاگادارکردنەوە.",
-            "شوێنی وردی GPS، پەیوەندییەکانی مۆبایل و زانیاری کارتی بانکی کۆناکەینەوە."
+            "شوێنی GPS تەنها کاتێک وەردەگرین کە خۆت کلیک لە «دیاریکردنی شوێنی ئێستام» دەکەیت بۆ پاشەکەوتکردنی شوێنی گەیاندن؛ بە بەردەوامی یان لە پشتەوە شوێنت ناگرین. پەیوەندییەکانی مۆبایل و زانیاری کارتی بانکی کۆناکەینەوە."
           ],
           "ar": [
             "معلومات الحساب: الاسم، اسم المستخدم، رقم الهاتف، البريد، المدينة، العنوان وصورة الملف (إن أضفتها).",
+            "مواقع التوصيل: اسم المكان (مثل المحل أو البيت)، اسم المستلم ورقمه، المدينة، أقرب معلم ونقطة الخريطة (GPS) التي تحفظها بنفسك.",
             "الطلبات: المنتجات والكميات والأسعار والملاحظات وحالة الطلب.",
             "بيانات الدفع: طريقة الدفع والمبلغ وحالة الدفع ورقم العملية التي يرسلها مزود الدفع (FIB، Super Qi، FastPay). لا نستلم أبداً أرقام البطاقات أو كلمات المرور أو رمز PIN.",
             "ما تكتبه بنفسك: التقييمات والتعليقات، رسائل الدعم، والمشاركة في التحديات.",
             "معلومات الجهاز والاستخدام: معرّف مجهول للجهاز، نوع الجهاز، الدولة وعنوان IP (للإحصاءات ومنع الاحتيال)، ورمز الإشعارات.",
-            "لا نجمع موقعك الدقيق (GPS) ولا جهات الاتصال ولا بيانات البطاقات المصرفية."
+            "نجمع موقع GPS فقط عندما تضغط بنفسك «تحديد موقعي الحالي» لحفظ موقع التوصيل، ولا نتتبع موقعك باستمرار أو في الخلفية. لا نجمع جهات الاتصال ولا بيانات البطاقات المصرفية."
           ],
           "en": [
             "Account: name, username, phone number, e-mail, city, address and profile photo (if you add one).",
+            "Delivery locations: a place name (e.g. shop or home), the recipient's name and phone, city, nearest landmark and the map point (GPS) that you save yourself.",
             "Orders: products, quantities, prices, notes and status.",
             "Payment data: payment method, amount, payment status and the transaction ID sent to us by the payment provider (FIB, Super Qi, FastPay). We never receive card numbers, passwords or PINs.",
             "What you write: ratings and comments, support messages and challenge participation.",
             "Device and usage: an anonymous device ID, device type, country and IP address (for statistics and fraud prevention), and a push-notification token.",
-            "We do not collect your precise GPS location, your contacts or bank-card details."
+            "We only collect a GPS location when you tap \"Use my current location\" to save a delivery address — never continuously or in the background. We do not collect your contacts or bank-card details."
           ]
         }
       },
@@ -324,19 +327,19 @@
         },
         "p": {
           "ku": [
-            "جێبەجێکردن و گەیاندنی داواکارییەکانت و پەیوەندیکردن پێتەوە دەربارەیان.",
+            "جێبەجێکردن و گەیاندنی داواکارییەکانت بۆ ئەو شوێنەی هەڵتبژاردووە (کارمەندانی گەیاندن خاڵی نەخشەکە دەبینن)، و پەیوەندیکردن پێتەوە دەربارەیان.",
             "ناردنی ئاگادارکردنەوە (نوێکاری داواکاری، ئۆفەر، خەڵات) — دەتوانیت لە ڕێکخستنی مۆبایلەکەت بیکوژێنیتەوە.",
             "وەڵامدانەوەی نامەکانت، بەڕێوەبردنی خەڵات و چالێنج، و پیشاندانی هەڵسەنگاندنەکان.",
             "باشترکردنی ئەپ بە ئاماری گشتی، و پاراستنی هەژمارەکان لە فێڵ و بەکارهێنانی خراپ."
           ],
           "ar": [
-            "تنفيذ طلباتك وتوصيلها والتواصل معك بشأنها.",
+            "تنفيذ طلباتك وتوصيلها إلى الموقع الذي تختاره (يرى موظفو التوصيل نقطة الخريطة) والتواصل معك بشأنها.",
             "إرسال الإشعارات (تحديثات الطلبات، العروض، المكافآت) — ويمكنك إيقافها من إعدادات هاتفك.",
             "الرد على رسائلك وإدارة المكافآت والتحديات وعرض التقييمات.",
             "تحسين التطبيق عبر إحصاءات عامة وحماية الحسابات من الاحتيال وسوء الاستخدام."
           ],
           "en": [
-            "To process and deliver your orders and contact you about them.",
+            "To process and deliver your orders to the location you choose (delivery staff see the map point), and to contact you about them.",
             "To send notifications (order updates, offers, rewards) — you can turn them off in your phone's settings.",
             "To answer your messages, run rewards and challenges, and show ratings.",
             "To improve the app with aggregate statistics and to protect accounts against fraud and misuse."

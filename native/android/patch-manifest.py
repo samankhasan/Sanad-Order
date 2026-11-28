@@ -1,4 +1,5 @@
-# Adds the Google sign-in deep link (com.sanadcompany.sanadorder://login-callback) to MainActivity.
+# Adds the Google sign-in deep link (com.sanadcompany.sanadorder://login-callback) to MainActivity,
+# and the location permission used when a member saves a delivery location ("Use my current location").
 import re, sys
 p = sys.argv[1]
 s = open(p, encoding='utf-8').read()
@@ -16,4 +17,10 @@ if 'login-callback' not in s:
     if n != 1:
         sys.exit('MainActivity not found in manifest')
     open(p, 'w', encoding='utf-8').write(s)
-print('deep link ok')
+perms = ['android.permission.ACCESS_COARSE_LOCATION', 'android.permission.ACCESS_FINE_LOCATION']
+missing = [x for x in perms if x not in s]
+if missing:
+    lines = ''.join(f'    <uses-permission android:name="{x}" />\n' for x in missing)
+    s = s.replace('</manifest>', lines + '</manifest>', 1)
+    open(p, 'w', encoding='utf-8').write(s)
+print('deep link + location permission ok')

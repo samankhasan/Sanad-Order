@@ -19,7 +19,9 @@ export default function AdminLayout() {
     { to: '/admin/notify', label: t('notifications') }
   ]
   // operators only add products and members
-  const tabs = isAdmin ? all : all.filter(x => x.to === '/admin/products' || x.to === '/admin/customers')
+  // operators: receive orders, answer messages, add products and members
+  const OPERATOR = ['/admin/orders', '/admin/support', '/admin/products', '/admin/customers']
+  const tabs = isAdmin ? all : OPERATOR.map(to => all.find(x => x.to === to)!).filter(Boolean)
   return (
     <div>
       <div className="app-bar !border-theme border-b" data-scrolled="true"><div className="page px-g pb-3">

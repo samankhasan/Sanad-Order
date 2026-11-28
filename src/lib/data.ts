@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import type { Category, HomeBanner, PaymentMethod, Product, Subcategory } from './types'
+import type { Address, Category, HomeBanner, PaymentMethod, Product, Subcategory } from './types'
 
 let categoriesCache: Category[] | null = null
 
@@ -83,3 +83,17 @@ export function usePaymentMethods() {
   useEffect(() => { load() }, [load])
   return { methods: data, reload: load }
 }
+
+/** The member's saved delivery locations (default first). */
+export function useAddresses(userId?: string | null) {
+  const [data, setData] = useState<Address[] | null>(null)
+  const load = useCallback(async () => {
+    if (!userId) { setData([]); return }
+    const { data } = await supabase.from('user_addresses').select('*').eq('user_id', userId).order('is_default', { ascending: false }).order('created_at', { ascending: false })
+    setData((data as Address[]) ?? [])
+  }, [userId])
+  useEffect(() => { load() }, [load])
+  return { addresses: data, reload: load }
+}
+
+export const mapsLink = (lat: number, lng: number) => `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`

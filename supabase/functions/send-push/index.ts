@@ -5,10 +5,10 @@
 //
 // Actions (POST JSON, with the user's Authorization header):
 //   { action: "broadcast", title, body, image_url?, link?, target_user? }   admin only
-//   { action: "order_status", order_id }                                     admin only → notifies the customer
-//   { action: "new_order", order_id }                                        order owner → notifies all admins
-//   { action: "support_message", message_id }                                message author → notifies all admins
-//   { action: "support_reply", message_id }                                  admin only → notifies the member
+//   { action: "order_status", order_id }                                     staff (admin/operator) → notifies the customer
+//   { action: "new_order", order_id }                                        order owner → notifies all staff
+//   { action: "support_message", message_id }                                message author → notifies all staff
+//   { action: "support_reply", message_id }                                  staff → notifies the member
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4'
 
 const cors = {
@@ -117,8 +117,11 @@ Deno.serve(async req => {
     const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '')
     const { data: u, error: ue } = await admin.auth.getUser(jwt)
     if (ue || !u.user) return json({ error: 'unauthorized' }, 401)
-    const { data: me } = await admin.from('profiles').select('id, role').eq('id', u.user.id).single()
-    const isAdmin = me?.role === 'admin'
+    const { data: me } = await admin.from('profiles').select('id, role, blocked_at').eq('id', u.user.id).single()
+    const isAdmin = me?.role === 'admin' && !me?.blocked_at
+    const isStaff = (me?.role === 'admin' || me?.role === 'operator') && !me?.blocked_at
+    // everyone who handles orders and messages
+    const staffIds = async () => ((await admin.from('profiles').select('id').in('role', ['admin', 'operator']).is('blocked_at', null)).data ?? []).map(a => a.id)
     const body = await req.json()
 
     if (body.action === 'broadcast') {
@@ -140,7 +143,7 @@ Deno.serve(async req => {
     }
 
     if (body.action === 'order_status') {
-      if (!isAdmin) return json({ error: 'forbidden' }, 403)
+      if (!isStaff) return json({ error: 'forbidden' }, 403)
       const { data: o } = await admin.from('orders').select('id, order_no, status, user_id').eq('id', body.order_id).single()
       if (!o) return json({ error: 'not_found' }, 404)
       const { data: p } = await admin.from('profiles').select('lang').eq('id', o.user_id).single()
@@ -157,8 +160,7 @@ Deno.serve(async req => {
     if (body.action === 'new_order') {
       const { data: o } = await admin.from('orders').select('id, order_no, total, user_id, profiles(full_name, shop_name)').eq('id', body.order_id).single()
       if (!o || o.user_id !== u.user.id) return json({ error: 'forbidden' }, 403)
-      const { data: admins } = await admin.from('profiles').select('id').eq('role', 'admin')
-      const ids = (admins ?? []).map(a => a.id)
+      const ids = await staffIds()
       if (!ids.length) return json({ ok: true, sent: 0 })
       // deno-lint-ignore no-explicit-any
       const who = (o as any).profiles?.shop_name || (o as any).profiles?.full_name || ''
@@ -174,8 +176,7 @@ Deno.serve(async req => {
     if (body.action === 'support_message') {
       const { data: m } = await admin.from('support_messages').select('id, body, user_id, profiles(full_name)').eq('id', body.message_id).single()
       if (!m || m.user_id !== u.user.id) return json({ error: 'forbidden' }, 403)
-      const { data: admins } = await admin.from('profiles').select('id').eq('role', 'admin')
-      const ids = (admins ?? []).map(a => a.id)
+      const ids = await staffIds()
       if (!ids.length) return json({ ok: true, sent: 0 })
       // deno-lint-ignore no-explicit-any
       const who = (m as any).profiles?.full_name || ''
@@ -189,7 +190,7 @@ Deno.serve(async req => {
     }
 
     if (body.action === 'support_reply') {
-      if (!isAdmin) return json({ error: 'forbidden' }, 403)
+      if (!isStaff) return json({ error: 'forbidden' }, 403)
       const { data: m } = await admin.from('support_messages').select('id, reply, user_id').eq('id', body.message_id).single()
       if (!m?.reply) return json({ error: 'not_found' }, 404)
       const { data: p } = await admin.from('profiles').select('lang').eq('id', m.user_id).single()

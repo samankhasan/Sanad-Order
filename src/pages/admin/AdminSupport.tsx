@@ -14,7 +14,7 @@ type Filter = 'open' | 'closed' | 'all'
 
 function Thread({ m, onChanged }: { m: SupportMessage; onChanged: () => void }) {
   const { t, lang } = usePrefs()
-  const { session } = useAuth()
+  const { session, isAdmin: canDelete } = useAuth()
   const toast = useToast()
   const [reply, setReply] = useState(m.reply ?? '')
   const [busy, setBusy] = useState<string | null>(null)
@@ -68,7 +68,7 @@ function Thread({ m, onChanged }: { m: SupportMessage; onChanged: () => void }) 
           {m.status === 'open'
             ? <button disabled={!!busy} onClick={() => update({ status: 'closed' }, 'close')} className="btn btn-ghost min-h-11 px-3 text-sm"><CheckCheck className="size-4" />{t('markDone')}</button>
             : <button disabled={!!busy} onClick={() => update({ status: 'open' }, 'open')} className="btn btn-ghost min-h-11 px-3 text-sm"><RotateCcw className="size-4" />{t('reopen')}</button>}
-          <button disabled={!!busy} onClick={remove} aria-label={t('delete')} className="ms-auto grid size-11 place-items-center rounded-xl text-rose-600 active:bg-[var(--surface-2)]"><Trash2 className="size-4" /></button>
+          {canDelete && <button disabled={!!busy} onClick={remove} aria-label={t('delete')} className="ms-auto grid size-11 place-items-center rounded-xl text-rose-600 active:bg-[var(--surface-2)]"><Trash2 className="size-4" /></button>}
         </div>
         {m.replied_at && <p className="text-[11px] text-2">{t('replied')} · {dateTime(m.replied_at, lang)}</p>}
       </div>
