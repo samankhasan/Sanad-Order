@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { AtSign, Ban, BadgeCheck, Gift, KeyRound, Lock, Mail, MapPin, Pencil, Phone, Search, ShieldCheck, Trash2, UserPlus, UserRound, Home as HomeIcon } from 'lucide-react'
 import { placeLabel } from '../../lib/iraq'
 import { usePrefs } from '../../context/PrefsContext'
+import PasswordMeter from '../../components/PasswordMeter'
+import { PW_MIN, checkNewPassword, type PwIssue } from '../../lib/password'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { supabase } from '../../lib/supabase'
@@ -98,15 +100,18 @@ function CreateMember({ onClose, onSaved }: { onClose: () => void; onSaved: () =
   const toast = useToast()
   const [f, setF] = useState({ full_name: '', username: '', phone: '', email: '', password: '', city: '', address: '', role: 'customer' as Role })
   const [busy, setBusy] = useState(false)
+  const [pwIssue, setPwIssue] = useState<PwIssue | null>(null)
   async function save(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
+    const bad = await checkNewPassword(f.password)
+    if (bad) { setBusy(false); setPwIssue(bad); toast(t(bad), 'error'); return }
     try {
       await account({ action: 'staff_create_user', ...f })
       toast(t('memberCreated')); onSaved(); onClose()
     } catch (err) {
       const m = (err as Error).message
-      const map: Record<string, string> = { username_taken: t('usernameTaken'), phone_taken: t('alreadyRegistered'), already_registered: t('alreadyRegistered'), account_blocked: t('accountBlocked'), password_too_short: t('passwordShort'), phone_or_email_required: t('phoneOrEmailRequired') }
+      const map: Record<string, string> = { username_taken: t('usernameTaken'), phone_taken: t('alreadyRegistered'), already_registered: t('alreadyRegistered'), account_blocked: t('accountBlocked'), password_too_short: t('passwordShort'), password_weak: t('pwNeedsMix'), password_leaked: t('pwLeaked'), phone_or_email_required: t('phoneOrEmailRequired') }
       toast(map[m] ?? m, 'error')
     } finally { setBusy(false) }
   }
@@ -124,7 +129,8 @@ function CreateMember({ onClose, onSaved }: { onClose: () => void; onSaved: () =
       <div className="relative"><Mail className={icon} />
         <input type="email" dir="ltr" className="field px-12 text-start rtl:text-right" placeholder={`${t('email')} (${t('optional')})`} aria-label={t('email')} value={f.email} onChange={e => setF({ ...f, email: e.target.value })} /></div>
       <div className="relative"><Lock className={icon} />
-        <input required minLength={6} dir="ltr" className="field px-12 text-start rtl:text-right" placeholder={t('password')} aria-label={t('password')} value={f.password} onChange={e => setF({ ...f, password: e.target.value })} autoComplete="new-password" /></div>
+        <input required minLength={PW_MIN} dir="ltr" className="field px-12 text-start rtl:text-right" placeholder={t('password')} aria-label={t('password')} value={f.password} onChange={e => { setPwIssue(null); setF({ ...f, password: e.target.value }) }} autoComplete="new-password" /></div>
+        <PasswordMeter value={f.password} issue={pwIssue} />
       <p className="label !mb-0 pt-1">{t('address')}</p>
       <CitySelect withIcon value={f.city} onChange={city => setF({ ...f, city })} />
       <div className="relative">
@@ -189,7 +195,12 @@ export default function AdminCustomers() {
   }
   function resetPassword(p: Profile) {
     const pw = prompt(`${p.full_name ?? ''}\n${t('newPasswordPrompt')}`)
-    if (pw) run(p, () => account({ action: 'admin_set_password', user_id: p.id, password: pw }))
+    if (!pw) return
+    run(p, async () => {
+      const bad = await checkNewPassword(pw)
+      if (bad) throw new Error(t(bad))
+      await account({ action: 'admin_set_password', user_id: p.id, password: pw })
+    })
   }
   function toggleBlock(p: Profile) {
     const blocked = !p.blocked_at

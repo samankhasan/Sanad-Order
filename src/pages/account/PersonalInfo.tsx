@@ -3,6 +3,8 @@ import { BadgeCheck, Camera, KeyRound, Lock, Mail, ShieldCheck, Trash2 } from 'l
 import { removeAvatarFile, uploadAvatar } from '../../lib/image'
 import { displayIdentity, isPhoneAccount, normalizePhone } from '../../lib/identity'
 import CitySelect from '../../components/CitySelect'
+import PasswordMeter from '../../components/PasswordMeter'
+import { PW_MIN, checkNewPassword, type PwIssue } from '../../lib/password'
 import { usePrefs } from '../../context/PrefsContext'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -19,6 +21,7 @@ export default function PersonalInfo() {
   const [busy, setBusy] = useState(false)
   const [pw, setPw] = useState({ a: '', b: '' })
   const [pwBusy, setPwBusy] = useState(false)
+  const [pwIssue, setPwIssue] = useState<PwIssue | null>(null)
   const photoRef = useRef<HTMLInputElement>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
 
@@ -41,9 +44,10 @@ export default function PersonalInfo() {
   }, [profile])
   async function changePassword(e: FormEvent) {
     e.preventDefault()
-    if (pw.a.length < 6) { toast(t('passwordShort'), 'error'); return }
     if (pw.a !== pw.b) { toast(t('passwordsDiffer'), 'error'); return }
     setPwBusy(true)
+    const bad = await checkNewPassword(pw.a)
+    if (bad) { setPwBusy(false); setPwIssue(bad); toast(t(bad), 'error'); return }
     const { error } = await supabase.auth.updateUser({ password: pw.a })
     setPwBusy(false)
     if (error) { toast(error.message, 'error'); return }
@@ -123,8 +127,9 @@ export default function PersonalInfo() {
           )}
           <form onSubmit={changePassword} className="space-y-3">
             <p className="label !mb-0">{t('changePassword')}</p>
-            <input type="password" autoComplete="new-password" minLength={6} className="field" dir="ltr" placeholder={t('newPassword')} aria-label={t('newPassword')} value={pw.a} onChange={e => setPw({ ...pw, a: e.target.value })} />
-            <input type="password" autoComplete="new-password" minLength={6} className="field" dir="ltr" placeholder={t('confirmPassword')} aria-label={t('confirmPassword')} value={pw.b} onChange={e => setPw({ ...pw, b: e.target.value })} />
+            <input type="password" autoComplete="new-password" minLength={PW_MIN} className="field" dir="ltr" placeholder={t('newPassword')} aria-label={t('newPassword')} value={pw.a} onChange={e => { setPwIssue(null); setPw({ ...pw, a: e.target.value }) }} />
+            {pw.a && <PasswordMeter value={pw.a} issue={pwIssue} />}
+            <input type="password" autoComplete="new-password" minLength={PW_MIN} className="field" dir="ltr" placeholder={t('confirmPassword')} aria-label={t('confirmPassword')} value={pw.b} onChange={e => setPw({ ...pw, b: e.target.value })} />
             <button disabled={pwBusy || !pw.a || !pw.b} className="btn btn-ghost w-full">{pwBusy ? <Spinner /> : <KeyRound className="size-5" />}{t('changePassword')}</button>
           </form>
         </section>

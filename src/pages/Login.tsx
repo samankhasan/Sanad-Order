@@ -5,6 +5,8 @@ import { usePrefs } from '../context/PrefsContext'
 import { useToast } from '../context/ToastContext'
 import { Spinner } from '../components/ui'
 import CitySelect from '../components/CitySelect'
+import PasswordMeter from '../components/PasswordMeter'
+import { PW_MIN, checkNewPassword, type PwIssue } from '../lib/password'
 import GoogleButton from '../components/GoogleButton'
 import { assetUrl, cn } from '../lib/format'
 import { LANGS } from '../lib/i18n'
@@ -29,6 +31,7 @@ export default function Login() {
   const toast = useToast()
   const [mode, setMode] = useState<'in' | 'up'>('in')
   const [busy, setBusy] = useState(false)
+  const [pwIssue, setPwIssue] = useState<PwIssue | null>(null)
   const [show, setShow] = useState(false)
   const [f, setF] = useState(() => {
     let id = ''
@@ -81,6 +84,8 @@ export default function Login() {
         if (error) throw error
         await savePassword(f.id.trim(), f.password)
       } else {
+        const issue = await checkNewPassword(f.password)
+        if (issue) { setPwIssue(issue); toast(t(issue), 'error'); return }
         const username = f.username.trim().toLowerCase()
         const { data: free } = await supabase.rpc('username_available', { p_username: username })
         if (!free) { toast(t('usernameTaken'), 'error'); return }
@@ -187,15 +192,15 @@ export default function Login() {
             )}
             <div className="relative">
               <Lock className={iconCls} />
-              <input required minLength={6} type={show ? 'text' : 'password'} dir="ltr" className={ltrField}
+              <input required minLength={mode === 'up' ? PW_MIN : 6} type={show ? 'text' : 'password'} dir="ltr" className={ltrField}
                 placeholder={t('password')} aria-label={t('password')}
                 id={mode === 'in' ? 'current-password' : 'new-password'} name="password"
-                value={f.password} onChange={set('password')} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} />
+                value={f.password} onChange={e => { setPwIssue(null); set('password')(e) }} autoComplete={mode === 'in' ? 'current-password' : 'new-password'} />
               <button type="button" aria-label="show password" onClick={() => setShow(!show)} className="absolute inset-y-0 end-0 grid w-12 place-items-center text-2">
                 {show ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
               </button>
             </div>
-            {mode === 'up' && <p className="-mt-2 px-1 text-[11px] text-2">{t('passwordHint')}</p>}
+            {mode === 'up' && <div className="-mt-1"><PasswordMeter value={f.password} issue={pwIssue} /></div>}
             {mode === 'up' && (
               <>
                 <p className="label !mb-0 pt-1">{t('address')}</p>
