@@ -25,7 +25,7 @@ export default function Rewards() {
     return () => { supabase.removeChannel(ch) }
   }, [load, session])
 
-  const isNew = (r: Reward) => Date.now() - new Date(r.created_at).getTime() < 7 * 864e5
+  const isNew = (r: Reward) => !r.seen_at || Date.now() - new Date(r.seen_at).getTime() < 864e5
 
   return (
     <div>

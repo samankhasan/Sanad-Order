@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { assetUrl } from '../lib/format'
 import { initBackButton } from '../lib/native'
 import UpdateBanner from './UpdateBanner'
+import RewardCelebration from './RewardCelebration'
 
 const ROOTS = ['/', '/cart', '/account', '/admin']
 
@@ -89,6 +90,7 @@ export default function AppShell() {
       )}
       <main className="pb-nav"><Outlet /></main>
       <UpdateBanner />
+      <RewardCelebration />
 
       {/* phones: bottom navigation bar */}
       <nav className="nav-bar no-print md:hidden" aria-label="main">

@@ -143,6 +143,7 @@ export interface Reward {
   body: string | null
   image_url: string | null
   created_at: string
+  seen_at: string | null
 }
 
 export type GoalType = 'orders_count' | 'spend_total' | 'custom'
