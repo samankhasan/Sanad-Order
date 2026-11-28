@@ -17,6 +17,20 @@ const cors = {
 const json = (d: unknown, status = 200) =>
   new Response(JSON.stringify(d), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 
+// New passwords: at least 8 characters, letters + numbers, and not found in a known data breach
+// (Have I Been Pwned range API — only the first 5 hex chars of the SHA-1 hash are sent).
+async function passwordProblem(pw: string): Promise<string | null> {
+  if (pw.length < 8) return 'password_too_short'
+  if (!/[a-z\u0600-\u06FF]/i.test(pw) || !/[0-9\u0660-\u0669\u06F0-\u06F9]/.test(pw)) return 'password_weak'
+  try {
+    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(pw))
+    const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase()
+    const res = await fetch(`https://api.pwnedpasswords.com/range/${hex.slice(0, 5)}`, { headers: { 'Add-Padding': 'true' }, signal: AbortSignal.timeout(5000) })
+    if (res.ok && (await res.text()).split('\n').some(l => { const [h, n] = l.trim().split(':'); return h === hex.slice(5) && Number(n) > 0 })) return 'password_leaked'
+  } catch { /* service unreachable → rules above still apply */ }
+  return null
+}
+
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
@@ -42,7 +56,7 @@ Deno.serve(async req => {
       const password = String(body.password ?? '')
       const fullName = String(body.full_name ?? '').trim()
       if (!fullName) return json({ error: 'name_required' }, 400)
-      if (password.length < 6) return json({ error: 'password_too_short' }, 400)
+      const pwBad = await passwordProblem(password); if (pwBad) return json({ error: pwBad }, 400)
       if (username) {
         const { data: free } = await admin.rpc('username_available', { p_username: username })
         if (!free) return json({ error: 'username_taken' }, 400)
@@ -110,7 +124,7 @@ Deno.serve(async req => {
 
     if (body.action === 'admin_set_password') {
       const pw = String(body.password ?? '')
-      if (pw.length < 6) return json({ error: 'password_too_short' }, 400)
+      const pwBad = await passwordProblem(pw); if (pwBad) return json({ error: pwBad }, 400)
       const { error } = await admin.auth.admin.updateUserById(target, { password: pw })
       if (error) throw error
       return json({ ok: true })
