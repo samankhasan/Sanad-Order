@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Download, MonitorSmartphone, Smartphone } from 'lucide-react'
+import { CheckCircle2, Download, Monitor, Smartphone } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
 import { ANDROID_APK_URL, isNativeApp } from '../../lib/native'
 import { PageHeader } from '../../components/ui'
@@ -20,6 +20,9 @@ const AndroidLogo = ({ className }: { className?: string }) => (
 export default function InstallApp() {
   const { t } = usePrefs()
   const [canPwa, setCanPwa] = useState(!!deferred)
+  // already running as an installed app (desktop or phone home screen)?
+  const standalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true)
+  const isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent)
   useEffect(() => {
     const h = () => setCanPwa(true)
     window.addEventListener('beforeinstallprompt', h)
@@ -58,6 +61,31 @@ export default function InstallApp() {
           </div>
         </section>
 
+        {/* Computer — the website installs as a desktop app (PWA): own window, icon, works on Windows, Mac and Linux */}
+        {!isNativeApp && (
+          <section className="card overflow-hidden">
+            <div className="flex items-center gap-3 border-b border-theme p-4">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#0284d6] text-white shadow-md"><Monitor className="size-7" /></span>
+              <div className="min-w-0 flex-1">
+                <p className="font-extrabold">{t('desktopTitle')}</p>
+                <p className="text-xs text-2">Windows · macOS · Linux</p>
+              </div>
+              {standalone && <span className="chip shrink-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><CheckCircle2 className="size-3.5" />{t('installed')}</span>}
+            </div>
+            <div className="space-y-2 p-4">
+              {standalone
+                ? <p className="text-center text-sm text-2">{t('desktopInstalledHint')}</p>
+                : canPwa
+                  ? <button onClick={async () => { await deferred?.prompt(); deferred = null; setCanPwa(false) }} className="btn min-h-14 w-full bg-[#0284d6] text-base text-white"><Download className="size-5" />{t('desktopInstall')}</button>
+                  : <p className="rounded-2xl surface-2 p-3 text-xs leading-6 text-2">{isSafari ? t('desktopSafari') : t('desktopManual')}</p>}
+              {!standalone && (
+                <ol className="space-y-1.5 pt-1 text-xs leading-6 text-2">
+                  {[t('desktopStep1'), t('desktopStep2'), t('desktopStep3')].map((s, i) => (
+                    <li key={i} className="flex gap-2"><span className="grid size-5 shrink-0 place-items-center rounded-full surface-2 text-[10px] font-black" dir="ltr">{i + 1}</span>{s}</li>
+                  ))}
+                </ol>
+              )}
+
         {/* iOS — not available yet */}
         <section className="card overflow-hidden opacity-80">
           <div className="flex items-center gap-3 p-4">
@@ -71,8 +99,8 @@ export default function InstallApp() {
           <div className="px-4 pb-4"><button disabled className="btn btn-ghost min-h-12 w-full opacity-60"><Smartphone className="size-5" />App Store</button></div>
         </section>
 
-        {canPwa && !isNativeApp && (
-          <button onClick={async () => { await deferred?.prompt(); deferred = null; setCanPwa(false) }} className="btn btn-ghost w-full"><MonitorSmartphone className="size-5" />{t('install')}</button>
+            </div>
+          </section>
         )}
       </div>
     </div>
