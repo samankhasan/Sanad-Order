@@ -50,11 +50,10 @@ export default function Account() {
   const load = useCallback(async () => {
     if (!session) return
     const uid = session.user.id
-    const week = new Date(Date.now() - 7 * 864e5).toISOString()
     const [o, r, rn, c] = await Promise.all([
       supabase.from('orders').select('id', { count: 'exact', head: true }).eq('user_id', uid),
       supabase.from('rewards').select('id', { count: 'exact', head: true }).eq('user_id', uid),
-      supabase.from('rewards').select('id', { count: 'exact', head: true }).eq('user_id', uid).gte('created_at', week),
+      supabase.from('rewards').select('id', { count: 'exact', head: true }).eq('user_id', uid).is('seen_at', null),
       supabase.from('challenges').select('id', { count: 'exact', head: true }).eq('is_active', true).lte('starts_at', new Date().toISOString()).gte('ends_at', new Date().toISOString())
     ])
     setCounts({ orders: o.count ?? 0, rewards: r.count ?? 0, newRewards: rn.count ?? 0, challenges: c.count ?? 0 })

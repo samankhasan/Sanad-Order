@@ -2,18 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { Browser } from '@capacitor/browser'
-import { Bell, ChevronLeft, ChevronRight, Flame, LifeBuoy, MessageCircle, Star, PackageSearch, ReceiptText, RotateCcw, Search, Sparkles, X } from 'lucide-react'
+import { Bell, BellRing, ChevronLeft, ChevronRight, Flame, LifeBuoy, MessageCircle, Star, PackageSearch, ReceiptText, RotateCcw, Search, Sparkles, X } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationsContext'
 import { useBanners, useCategories, usePopularProducts, useProducts } from '../lib/data'
 import { supabase } from '../lib/supabase'
-import { BrandLogo, EmptyState, ErrorBox, PullToRefresh, Skeleton, StatusBadge } from '../components/ui'
+import { BrandLogo, EmptyState, ErrorBox, PullToRefresh, Skeleton, Spinner, StatusBadge } from '../components/ui'
 import ProductCard from '../components/ProductCard'
 import ProductSheet from '../components/ProductSheet'
 import { assetUrl, cn, money } from '../lib/format'
 import type { HomeBanner, Order, Product } from '../lib/types'
 import { setStatusBarOverride } from '../lib/native'
+import { enablePush, isNative, pushState } from '../lib/push'
 
 function SectionTitle({ title, to, icon }: { title: string; to?: string; icon?: React.ReactNode }) {
   const { t } = usePrefs()
@@ -142,6 +143,20 @@ export default function Home() {
     })()
     return () => { live = false }
   }, [recent, session])
+  // website: invite the member to turn on notifications (rewards, order updates); "Later" hides it for a week
+  const [askPush, setAskPush] = useState(() => {
+    if (isNative || pushState() !== 'default') return false
+    try { return Date.now() - Number(localStorage.getItem('so.pushAskLater') || 0) > 7 * 864e5 } catch { return true }
+  })
+  const [pushBusy, setPushBusy] = useState(false)
+  const nav = useNavigate()
+  async function turnOnPush() {
+    setPushBusy(true)
+    try { await enablePush(p => nav(p)) } catch { /* the Notifications page shows details */ }
+    setPushBusy(false); setAskPush(false)
+  }
+  function pushLater() { try { localStorage.setItem('so.pushAskLater', String(Date.now())) } catch { /* ignore */ } setAskPush(false) }
+
   const rateProduct = useMemo(() => products?.find(p => p.id === toRate) ?? null, [products, toRate])
   useEffect(() => { setStatusBarOverride('light'); return () => setStatusBarOverride(null) }, [])
   const refresh = useCallback(() => Promise.all([reload(), reloadProducts(), reloadPopular(), reloadBanners(), loadRecent()]), [reload, reloadProducts, reloadPopular, reloadBanners, loadRecent])
@@ -231,6 +246,21 @@ export default function Home() {
                 </div>
                 <Chevron className="size-5 shrink-0 text-2" />
               </button>
+            )}
+
+            {/* ===== Turn on notifications (website) ===== */}
+            {askPush && (
+              <section className="rise flex items-center gap-3 rounded-[22px] bg-ink p-4 text-white shadow-lg dark:bg-[var(--surface-2)]">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/10"><BellRing className="size-6" /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-extrabold">{t('pushAskTitle')}</p>
+                  <p className="text-xs leading-5 text-white/70">{t('pushAskHint')}</p>
+                  <div className="mt-2 flex gap-2">
+                    <button onClick={turnOnPush} disabled={pushBusy} className="btn min-h-10 bg-white px-4 py-1.5 text-sm text-ink">{pushBusy ? <Spinner className="size-4" /> : <Bell className="size-4" />}{t('turnOn')}</button>
+                    <button onClick={pushLater} className="btn min-h-10 px-3 py-1.5 text-sm text-white/80">{t('later')}</button>
+                  </div>
+                </div>
+              </section>
             )}
 
             {/* ===== Quick actions ===== */}

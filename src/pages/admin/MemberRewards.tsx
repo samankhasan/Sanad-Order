@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { Camera, Gift, Send, Trash2, X } from 'lucide-react'
+import { Bell, BellOff, Camera, Gift, Send, Trash2, X } from 'lucide-react'
 import { usePrefs } from '../../context/PrefsContext'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -25,6 +25,11 @@ export default function MemberRewards({ member }: { member: Profile }) {
     setList((data as Reward[]) ?? [])
   }, [member.id])
   useEffect(() => { load() }, [load])
+  // does the member have a phone / browser registered for push notifications?
+  const [devices, setDevices] = useState<number | null>(null)
+  useEffect(() => {
+    supabase.from('push_tokens').select('token', { count: 'exact', head: true }).eq('user_id', member.id).then(({ count }) => setDevices(count ?? 0))
+  }, [member.id])
 
   async function upload(file: File) {
     setBusy('upload')
@@ -40,7 +45,7 @@ export default function MemberRewards({ member }: { member: Profile }) {
     setBusy(null)
     if (error) { toast(error.message, 'error'); return }
     notify({ action: 'broadcast', title: `🎁 ${row.title}`.slice(0, 120), body: (row.body || row.title).slice(0, 1000), image_url: row.image_url, link: '/account/rewards', target_user: member.id })
-    setF({ title: '', body: '', image_url: '' }); toast(t('rewardSent')); load()
+    setF({ title: '', body: '', image_url: '' }); toast(devices ? t('rewardSentPush') : t('rewardSent')); load()
   }
   async function remove(r: Reward) {
     if (!confirm(`${r.title}\n${t('deleteRewardConfirm')}`)) return
@@ -53,6 +58,11 @@ export default function MemberRewards({ member }: { member: Profile }) {
   return (
     <div className="space-y-4 p-5">
       <h2 className="flex items-center gap-2 text-lg font-extrabold"><Gift className="size-5" />{t('giveReward')} · <span className="truncate text-2">{member.full_name}</span></h2>
+      {devices != null && (
+        <p className={devices ? 'flex items-start gap-2 rounded-2xl bg-emerald-50 p-3 text-xs font-semibold leading-5 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300' : 'flex items-start gap-2 rounded-2xl bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300'}>
+          {devices ? <Bell className="size-4 shrink-0" /> : <BellOff className="size-4 shrink-0" />}{devices ? t('memberPushOn') : t('memberPushOff')}
+        </p>
+      )}
       <form onSubmit={save} className="space-y-3">
         <input required maxLength={120} className="field" placeholder={t('rewardTitle')} aria-label={t('rewardTitle')} value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
         <textarea rows={3} maxLength={1000} className="field resize-none" placeholder={t('rewardBody')} aria-label={t('rewardBody')} value={f.body} onChange={e => setF({ ...f, body: e.target.value })} />
