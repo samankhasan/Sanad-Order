@@ -4,6 +4,7 @@ import { usePrefs } from '../../context/PrefsContext'
 import { useToast } from '../../context/ToastContext'
 import { useCategories, useSubcategories } from '../../lib/data'
 import { subName } from './AdminCategories'
+import { notify } from '../../lib/push'
 import { supabase } from '../../lib/supabase'
 import { PRESETS, uploadOptimized } from '../../lib/image'
 import { Sheet, Spinner } from '../../components/ui'
@@ -49,7 +50,14 @@ export default function ProductForm({ product, defaultCategory, onClose, onSaved
       ? await supabase.from('products').update(payload).eq('id', product.id)
       : await supabase.from('products').insert(payload)
     setBusy(null)
-    if (error) toast(error.message, 'error'); else { toast(t('saved')); onSaved() }
+    if (error) { toast(error.message, 'error'); return }
+    // back in stock → push to the members who asked to be told (their in-app notification is written by the database)
+    if (product && !product.in_stock && payload.in_stock) {
+      const r = await notify({ action: 'back_in_stock', product_id: product.id }) as { data?: { members?: number } } | void
+      const n = r && r.data?.members
+      toast(n ? `${t('saved')} · ${t('stockAlertSent').replace('{n}', String(n))}` : t('saved'))
+    } else toast(t('saved'))
+    onSaved()
   }
 
   async function remove() {

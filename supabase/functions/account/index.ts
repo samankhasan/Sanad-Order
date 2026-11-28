@@ -75,9 +75,15 @@ Deno.serve(async req => {
       })
       if (error) return json({ error: /already/i.test(error.message) ? 'already_registered' : /database error/i.test(error.message) ? 'account_blocked' : error.message }, 400)
       if (role !== 'customer') await admin.from('profiles').update({ role }).eq('id', created.user.id)
+      await admin.from('audit_log').insert({ actor: u.user.id, action: 'create_member', entity: 'member', entity_id: created.user.id, label: fullName, changes: role !== 'customer' ? { role: [null, role] } : null })
       return json({ ok: true, user_id: created.user.id })
     }
     const target = String(body.user_id ?? '')
+    // activity log for admin actions done here (they bypass the database triggers, which only see the signed-in user)
+    const audit = async (action: string, entity_id: string, label?: string | null) => {
+      const name = label ?? (await admin.from('profiles').select('full_name').eq('id', entity_id).single()).data?.full_name ?? null
+      await admin.from('audit_log').insert({ actor: u.user!.id, action, entity: 'member', entity_id, label: name })
+    }
     // block / delete: never yourself, never another admin (remove the admin role first)
     async function guardTarget() {
       if (!target || target === u.user!.id) return 'not_allowed_on_self'
@@ -98,6 +104,7 @@ Deno.serve(async req => {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'invalid_email' }, 400)
       const { error } = await admin.auth.admin.updateUserById(target, { email, email_confirm: true })
       if (error) throw error
+      await audit('set_email', target)
       return json({ ok: true })
     }
 
@@ -112,13 +119,16 @@ Deno.serve(async req => {
       const { error: be } = await admin.rpc('set_member_block', { p_user: target, p_blocked: blocked })
       if (be) throw be
       if (blocked) await admin.from('push_tokens').delete().eq('user_id', target)
+      await audit(blocked ? 'block' : 'unblock', target)
       return json({ ok: true })
     }
 
     if (body.action === 'admin_delete_user') {
       const bad = await guardTarget(); if (bad) return json({ error: bad }, 400)
+      const { data: gone } = await admin.from('profiles').select('full_name').eq('id', target).single()
       const { error } = await admin.auth.admin.deleteUser(target)
       if (error) throw error
+      await audit('delete_member', target, gone?.full_name ?? '—')
       return json({ ok: true })
     }
 
@@ -127,6 +137,7 @@ Deno.serve(async req => {
       const pwBad = await passwordProblem(pw); if (pwBad) return json({ error: pwBad }, 400)
       const { error } = await admin.auth.admin.updateUserById(target, { password: pw })
       if (error) throw error
+      await audit('set_password', target)
       return json({ ok: true })
     }
 

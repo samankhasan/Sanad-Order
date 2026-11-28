@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { EyeOff, GripVertical, ImageOff, Info, PackageOpen, Plus, Search, Zap } from 'lucide-react'
+import { BellRing, EyeOff, GripVertical, ImageOff, Info, PackageOpen, Plus, Search, Zap } from 'lucide-react'
 import { PRESETS, reoptimizeStored } from '../../lib/image'
 import { usePrefs } from '../../context/PrefsContext'
 import { useCategories, useProducts, useSubcategories } from '../../lib/data'
@@ -22,6 +22,15 @@ export default function AdminProducts() {
   const { isAdmin } = useAuth()
   const [cat, setCat] = useState<string | null>(null)
   const { products, error, reload } = useProducts(null, { includeHidden: true })
+  // members waiting for an out-of-stock product ("notify me when it's back")
+  const [waiting, setWaiting] = useState<Record<string, number>>({})
+  useEffect(() => {
+    supabase.from('stock_alerts').select('product_id').is('notified_at', null).then(({ data }) => {
+      const m: Record<string, number> = {}
+      ;(data as { product_id: string }[] | null)?.forEach(r => { m[r.product_id] = (m[r.product_id] ?? 0) + 1 })
+      setWaiting(m)
+    })
+  }, [products])
   const { subcategories } = useSubcategories(null, { includeHidden: true })
   const subOf = (id: string | null) => subcategories?.find(s => s.id === id)
   const [q, setQ] = useState('')
@@ -106,7 +115,7 @@ export default function AdminProducts() {
           <SortableContext items={order.map(p => p.id)} strategy={verticalListSortingStrategy} disabled={!canSort}>
             <ul className="card divide-y divide-[var(--border)] overflow-hidden">
               {order.map(p => (
-                <ProductRow key={p.id} p={p} sortable={canSort} c={catOf(p.category_id)} sub={subOf(p.subcategory_id)} onOpen={isAdmin ? () => setEditing(p) : undefined} />
+                <ProductRow key={p.id} p={p} waiting={waiting[p.id] ?? 0} sortable={canSort} c={catOf(p.category_id)} sub={subOf(p.subcategory_id)} onOpen={isAdmin ? () => setEditing(p) : undefined} />
               ))}
             </ul>
           </SortableContext>
@@ -124,7 +133,7 @@ export default function AdminProducts() {
   )
 }
 
-function ProductRow({ p, c, sub, sortable, onOpen }: { p: Product; c?: Category; sub?: Subcategory; sortable: boolean; onOpen?: () => void }) {
+function ProductRow({ p, c, sub, sortable, onOpen, waiting }: { p: Product; c?: Category; sub?: Subcategory; sortable: boolean; onOpen?: () => void; waiting: number }) {
   const { t, lang, catName } = usePrefs()
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: !sortable })
   return (
@@ -150,6 +159,7 @@ function ProductRow({ p, c, sub, sortable, onOpen }: { p: Product; c?: Category;
         <div className="text-end">
           <p className="text-sm font-extrabold" dir="ltr">{money(p.price, lang)}</p>
           {!p.in_stock && <p className="text-[11px] font-bold text-rose-600">{t('outOfStock')}</p>}
+          {!p.in_stock && waiting > 0 && <p className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"><BellRing className="size-3" /><bdi dir="ltr">{waiting}</bdi> {t('waitingMembers')}</p>}
         </div>
       </button>
     </li>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowDownWideNarrow, PackageOpen, Search, ShoppingBag, X } from 'lucide-react'
 import { usePrefs } from '../context/PrefsContext'
 import { useCart } from '../context/CartContext'
@@ -26,6 +26,15 @@ export default function Category() {
   const { subcategories } = useSubcategories(cat?.id ?? '00000000-0000-0000-0000-000000000000')
   const [open, setOpen] = useState<Product | null>(null)
   useEffect(() => { setOpen(null); setQ(''); setSubId(null) }, [slug])
+  // deep link from a notification: /c/<brand>?p=<product id> opens that product
+  const [params, setParams] = useSearchParams()
+  const linked = params.get('p')
+  useEffect(() => {
+    if (!linked || !products) return
+    const p = products.find(x => x.id === linked)
+    if (p) setOpen(p)
+    setParams(prev => { prev.delete('p'); return prev }, { replace: true })
+  }, [linked, products, setParams])
   useEffect(() => { setStatusBarOverride('dark'); return () => setStatusBarOverride(null) }, [])
   const refresh = useCallback(() => reload(), [reload])
 
