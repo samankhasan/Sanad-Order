@@ -103,7 +103,7 @@ export default function Account() {
           <MenuRow to="/account/terms" icon={<FileText className="size-5" />} label={t('termsTitle')} />
           <MenuRow to="/account/privacy" icon={<Lock className="size-5" />} label={t('privacyTitle')} />
           <MenuRow to="/account/careers" icon={<Briefcase className="size-5" />} label={t('workWithUs')} />
-          <MenuRow to="/account/settings#about" icon={<Info className="size-5" />} label={t('about')} value={<bdi dir="ltr">v{__APP_VERSION__}</bdi>} />
+          <MenuRow to="/account/about" icon={<Info className="size-5" />} label={t('about')} value={<bdi dir="ltr">v{__APP_VERSION__}</bdi>} />
         </Group>
 
         <Group>
